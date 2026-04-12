@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1C1A16">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="増田まち歩き">
+<title>増田まち歩きガイド v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;600;700&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F4EFE4;
+    --paper: #FAF7F1;
+    --ink: #1C1A16;
+    --vermillion: #B83232;
+    --gold: #9A7A3A;
+    --muted: #7A7060;
+    --border: #D4C9B0;
+    --green: #3A7A4A;
+    --radius: 12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    max-width: 480px;
+    margin: 0 auto;
+    overflow-x: hidden;
+  }
+
+  .screen { display: none; min-height: 100vh; flex-direction: column; }
+  .screen.active { display: flex; animation: fadeIn 0.35s ease; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ══ START ══ */
+  #screen-start {
+    background: var(--ink);
+    color: var(--bg);
+    align-items: center;
+    justify-content: center;
+    padding: 48px 28px;
+    position: relative;
+  }
+
+  .start-pattern {
+    position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(255,255,255,0.02) 20px, rgba(255,255,255,0.02) 21px);
+    pointer-events: none;
+  }
+
+  .start-inner { position: relative; z-index: 1; text-align: center; width: 100%; }
+
+  .start-badge {
+    display: inline-block;
+    border: 1px solid var(--vermillion);
+    color: var(--vermillion);
+    font-family: 'Noto Serif JP', serif;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    padding: 4px 14px;
+    margin-bottom: 28px;
+  }
+
+  .start-title {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+    color: #FAF7F1;
+  }
+
+  .start-version {
+    font-size: 10px;
+    color: var(--vermillion);
+    letter-spacing: 0.2em;
+    margin-bottom: 8px;
+  }
+
+  .start-subtitle {
+    font-size: 12px;
+    color: rgba(250,247,241,0.45);
+    letter-spacing: 0.12em;
+    margin-bottom: 40px;
+  }
+
+  .spot-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 40px;
+    text-align: left;
+  }
+
+  .spot-preview-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 8px;
+    padding: 10px 14px;
+  }
+
+  .spot-num-small {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 18px;
+    color: var(--vermillion);
+    min-width: 22px;
+  }
+
+  .spot-preview-name { font-size: 13px; color: rgba(250,247,241,0.85); font-weight: 500; flex: 1; }
+  .spot-preview-dist { font-size: 10px; color: rgba(250,247,241,0.3); }
+
+  .gps-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: rgba(58,122,74,0.15);
+    border: 1px solid rgba(58,122,74,0.3);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 28px;
+    text-align: left;
+    font-size: 11px;
+    color: rgba(250,247,241,0.65);
+    line-height: 1.7;
+    letter-spacing: 0.04em;
+  }
+
+  .gps-notice-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+  .btn-start {
+    background: var(--vermillion);
+    color: white;
+    border: none;
+    padding: 16px;
+    font-family: 'Noto Serif JP', serif;
+    font-size: 16px;
+    letter-spacing: 0.15em;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    transition: opacity 0.2s;
+    margin-bottom: 12px;
+  }
+
+  .btn-start:active { opacity: 0.8; }
+
+  .walk-info { font-size: 11px; color: rgba(250,247,241,0.3); letter-spacing: 0.08em; }
+
+  /* ══ NAV ══ */
+  #screen-nav { background: var(--bg); }
+
+  .nav-header {
+    background: var(--paper);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px 12px;
+  }
+
+  .nav-progress-bar {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+
+  .nav-progress-fill {
+    height: 100%;
+    background: var(--vermillion);
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+
+  .nav-top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
+  .nav-step-label { font-size: 10px; color: var(--muted); letter-spacing: 0.15em; }
+
+  .gps-status {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  .gps-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #ccc;
+    transition: background 0.3s;
+  }
+
+  .gps-dot.searching { background: #f0a040; animation: blink 1s infinite; }
+  .gps-dot.active { background: var(--green); }
+  .gps-dot.error { background: var(--vermillion); }
+
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  .nav-spot-name {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  /* ── 距離インジケーター ── */
+  .distance-panel {
+    margin: 16px 20px 0;
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: border-color 0.4s, background 0.4s;
+  }
+
+  .distance-panel.near {
+    border-color: #f0a040;
+    background: #fffbf0;
+  }
+
+  .distance-panel.arrived {
+    border-color: var(--green);
+    background: #f0fff4;
+  }
+
+  .dist-icon { font-size: 28px; }
+
+  .dist-info { flex: 1; }
+
+  .dist-number {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1;
+  }
+
+  .dist-number span { font-size: 13px; font-family: 'Noto Sans JP', sans-serif; font-weight: 400; margin-left: 3px; color: var(--muted); }
+
+  .dist-status { font-size: 11px; color: var(--muted); margin-top: 3px; letter-spacing: 0.05em; }
+
+  /* ── プログレスリング ── */
+  .ring-wrap {
+    position: relative;
+    width: 52px; height: 52px;
+    flex-shrink: 0;
+  }
+
+  .ring-svg { transform: rotate(-90deg); }
+
+  .ring-bg { fill: none; stroke: var(--border); stroke-width: 4; }
+
+  .ring-fill {
+    fill: none;
+    stroke: var(--vermillion);
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-dasharray: 138;
+    stroke-dashoffset: 138;
+    transition: stroke-dashoffset 0.6s ease, stroke 0.4s;
+  }
+
+  .ring-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  /* ── マップエリア ── */
+  .map-area {
+    margin: 12px 20px 0;
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: #E8E2D8;
+    height: 130px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+    cursor: pointer;
+    border: 1px solid var(--border);
+  }
+
+  .map-dots {
+    position: absolute; inset: 0;
+    background-image: radial-gradient(circle, rgba(0,0,0,0.06) 1px, transparent 1px);
+    background-size: 18px 18px;
+  }
+
+  .map-pin {
+    position: relative; z-index: 2;
+    width: 40px; height: 40px;
+    background: var(--vermillion);
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 12px rgba(184,50,50,0.35);
+  }
+
+  .map-pin-inner { transform: rotate(45deg); font-size: 18px; }
+
+  .map-open-label {
+    position: relative; z-index: 2;
+    font-size: 12px; color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+
+  /* ── スポットドット ── */
+  .spots-row {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 14px 16px 0;
+  }
+
+  .spot-dot-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+  }
+
+  .dot-line-row { display: flex; align-items: center; width: 100%; }
+
+  .dot-line {
+    height: 2px;
+    background: var(--border);
+    flex: 1;
+    transition: background 0.4s;
+  }
+
+  .dot-line.done { background: var(--vermillion); }
+
+  .spot-dot {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: #C8C0B0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Noto Serif JP', serif;
+    font-size: 12px; font-weight: 600;
+    color: white;
+    flex-shrink: 0;
+    transition: background 0.3s, transform 0.3s;
+    position: relative; z-index: 1;
+  }
+
+  .spot-dot.done { background: var(--gold); }
+  .spot-dot.current { background: var(--vermillion); transform: scale(1.15); }
+
+  .spot-dot-label {
+    font-size: 9px; color: var(--muted);
+    margin-top: 5px; text-align: center;
+    max-width: 58px; line-height: 1.4;
+  }
+
+  /* ── ボタンエリア ── */
+  .arrive-section { padding: 14px 20px 28px; display: flex; flex-direction: column; gap: 10px; margin-top: auto; }
+
+  .btn-arrived {
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    color: var(--ink);
+    padding: 15px;
+    font-family: 'Noto Serif JP', serif;
+    font-size: 14px;
+    letter-spacing: 0.12em;
+    border-radius: var(--radius);
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .btn-arrived:active { background: var(--ink); color: var(--paper); }
+
+  .manual-hint { font-size: 10px; color: var(--muted); text-align: center; letter-spacing: 0.06em; }
+
+  /* ── 音声ログ ── */
+  .voice-log {
+    margin: 0 20px;
+    background: rgba(58,122,74,0.08);
+    border: 1px solid rgba(58,122,74,0.2);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 11px;
+    color: var(--green);
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: 0.04em;
+    line-height: 1.5;
+  }
+
+  .voice-wave { font-size: 16px; }
+
+  /* ══ EXPLAIN ══ */
+  #screen-explain { background: var(--bg); }
+
+  .explain-header {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 28px 24px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .explain-num-bg {
+    position: absolute;
+    right: 16px; top: 8px;
+    font-family: 'Noto Serif JP', serif;
+    font-size: 72px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.06);
+    line-height: 1;
+  }
+
+  .explain-badge {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--vermillion);
+    border: 1px solid var(--vermillion);
+    padding: 2px 10px;
+    display: inline-block;
+    margin-bottom: 10px;
+  }
+
+  .explain-title {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.3;
+    position: relative; z-index: 1;
+    margin-bottom: 14px;
+  }
+
+  .btn-voice-replay {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(250,247,241,0.75);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s;
+  }
+
+  .btn-voice-replay:active { background: rgba(255,255,255,0.15); }
+
+  .explain-body { padding: 24px 20px; flex: 1; overflow-y: auto; }
+
+  .explain-text {
+    font-size: 15px;
+    line-height: 2.1;
+    color: var(--ink);
+    letter-spacing: 0.04em;
+    margin-bottom: 24px;
+    white-space: pre-wrap;
+  }
+
+  .explain-divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
+  .explain-sub {
+    font-size: 10px; color: var(--muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .explain-keyword {
+    display: inline-block;
+    background: var(--paper);
+    border: 1px solid var(--border);
+    font-size: 12px; color: var(--gold);
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin: 3px 3px 3px 0;
+    letter-spacing: 0.04em;
+  }
+
+  .btn-next {
+    margin: 0 20px 28px;
+    background: var(--vermillion);
+    color: white;
+    border: none;
+    padding: 16px;
+    font-family: 'Noto Serif JP', serif;
+    font-size: 15px;
+    letter-spacing: 0.15em;
+    border-radius: var(--radius);
+    cursor: pointer;
+    width: calc(100% - 40px);
+    transition: opacity 0.2s;
+  }
+
+  .btn-next:active { opacity: 0.8; }
+
+  /* ══ GOAL ══ */
+  #screen-goal {
+    background: var(--ink);
+    color: var(--paper);
+    align-items: center;
+    justify-content: center;
+    padding: 48px 28px;
+    text-align: center;
+    position: relative;
+  }
+
+  .goal-pattern {
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 20%, rgba(184,50,50,0.12) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(154,122,58,0.12) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .goal-inner { position: relative; z-index: 1; }
+
+  .goal-icon { font-size: 72px; margin-bottom: 20px; animation: float 3s ease-in-out infinite; }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+
+  .goal-title {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 30px; font-weight: 700;
+    margin-bottom: 10px; letter-spacing: 0.1em;
+  }
+
+  .goal-sub {
+    font-size: 13px;
+    color: rgba(250,247,241,0.55);
+    line-height: 2.0;
+    margin-bottom: 36px;
+    letter-spacing: 0.05em;
+  }
+
+  .goal-dots { display: flex; justify-content: center; gap: 10px; margin-bottom: 36px; }
+
+  .goal-dot {
+    width: 38px; height: 38px;
+    background: var(--gold);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Noto Serif JP', serif;
+    font-size: 14px; font-weight: 700; color: white;
+  }
+
+  .btn-restart {
+    background: transparent;
+    border: 1px solid rgba(250,247,241,0.25);
+    color: rgba(250,247,241,0.5);
+    padding: 12px 32px;
+    font-size: 12px; letter-spacing: 0.1em;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-restart:active { border-color: var(--vermillion); color: var(--vermillion); }
+
+  /* ══ DEBUG PANEL ══ */
+  .debug-panel {
+    position: fixed;
+    bottom: 8px; right: 8px;
+    background: rgba(0,0,0,0.75);
+    color: rgba(255,255,255,0.7);
+    font-size: 10px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-family: monospace;
+    z-index: 999;
+    display: none;
+    line-height: 1.6;
+  }
+
+  .debug-panel.show { display: block; }
+</style>
+</head>
+<body>
+
+<!-- ① スタート -->
+<div id="screen-start" class="screen active">
+  <div class="start-pattern"></div>
+  <div class="start-inner">
+    <div class="start-badge">MASUDA MACHI ARUKI</div>
+    <div class="start-title">増田<br>まち歩き</div>
+    <div class="start-version">VERSION 2.0 ／ GPS + 音声ガイド</div>
+    <div class="start-subtitle">歴史の礎を歩くコース</div>
+
+    <div class="spot-preview">
+      <div class="spot-preview-item">
+        <div class="spot-num-small">一</div>
+        <div class="spot-preview-name">満福寺</div>
+        <div class="spot-preview-dist">START</div>
+      </div>
+      <div class="spot-preview-item">
+        <div class="spot-num-small">二</div>
+        <div class="spot-preview-name">清真苑</div>
+        <div class="spot-preview-dist">約200m</div>
+      </div>
+      <div class="spot-preview-item">
+        <div class="spot-num-small">三</div>
+        <div class="spot-preview-name">北都銀行発祥の地碑</div>
+        <div class="spot-preview-dist">約250m</div>
+      </div>
+      <div class="spot-preview-item">
+        <div class="spot-num-small">★</div>
+        <div class="spot-preview-name">案内所「ほたる」（ゴール）</div>
+        <div class="spot-preview-dist">約300m</div>
+      </div>
+    </div>
+
+    <div class="gps-notice">
+      <div class="gps-notice-icon">📡</div>
+      <div>GPSで現在地を確認し、スポットに近づくと自動で音声ガイドが始まります。スマホの位置情報と音声をオンにしてください。</div>
+    </div>
+
+    <button class="btn-start" onclick="startTour()">まち歩きを始める</button>
+    <div class="walk-info">所要時間：約40〜50分 ／ 距離：約500m</div>
+  </div>
+</div>
+
+<!-- ② ナビ -->
+<div id="screen-nav" class="screen">
+  <div class="nav-header">
+    <div class="nav-progress-bar">
+      <div class="nav-progress-fill" id="progress-fill"></div>
+    </div>
+    <div class="nav-top-row">
+      <div class="nav-step-label" id="nav-step-label"></div>
+      <div class="gps-status">
+        <div class="gps-dot searching" id="gps-dot"></div>
+        <span id="gps-label">GPS取得中</span>
+      </div>
+    </div>
+    <div class="nav-spot-name" id="nav-spot-name"></div>
+  </div>
+
+  <!-- 距離パネル -->
+  <div class="distance-panel" id="distance-panel">
+    <div class="dist-icon" id="dist-icon">🚶</div>
+    <div class="dist-info">
+      <div class="dist-number" id="dist-number">--<span>m</span></div>
+      <div class="dist-status" id="dist-status">GPS位置情報を取得しています…</div>
+    </div>
+    <div class="ring-wrap">
+      <svg class="ring-svg" width="52" height="52" viewBox="0 0 52 52">
+        <circle class="ring-bg" cx="26" cy="26" r="22"/>
+        <circle class="ring-fill" id="ring-fill" cx="26" cy="26" r="22"/>
+      </svg>
+      <div class="ring-label" id="ring-label">--</div>
+    </div>
+  </div>
+
+  <!-- 音声ログ -->
+  <div class="voice-log" id="voice-log">
+    <span class="voice-wave">🔇</span>
+    <span id="voice-log-text">音声ガイド待機中</span>
+  </div>
+
+  <!-- マップ -->
+  <div class="map-area" onclick="openMaps()" id="map-area">
+    <div class="map-dots"></div>
+    <div class="map-pin"><div class="map-pin-inner">🏛</div></div>
+    <div class="map-open-label">タップしてGoogleマップで案内</div>
+  </div>
+
+  <!-- スポットドット -->
+  <div class="spots-row" id="spots-row"></div>
+
+  <!-- ボタン -->
+  <div class="arrive-section">
+    <button class="btn-arrived" onclick="manualArrive()">📍 着いた！（手動）</button>
+    <div class="manual-hint">GPSが届かない場合などに使用</div>
+  </div>
+</div>
+
+<!-- ③ 解説 -->
+<div id="screen-explain" class="screen">
+  <div class="explain-header">
+    <div class="explain-num-bg" id="explain-num-bg"></div>
+    <div class="explain-badge" id="explain-badge"></div>
+    <div class="explain-title" id="explain-title"></div>
+    <button class="btn-voice-replay" onclick="replayVoice()">
+      🔊 もう一度聴く
+    </button>
+  </div>
+  <div class="explain-body">
+    <div class="explain-text" id="explain-text"></div>
+    <hr class="explain-divider">
+    <div class="explain-sub">キーワード</div>
+    <div id="explain-keywords"></div>
+  </div>
+  <button class="btn-next" id="btn-next" onclick="nextSpot()"></button>
+</div>
+
+<!-- ④ ゴール -->
+<div id="screen-goal" class="screen">
+  <div class="goal-pattern"></div>
+  <div class="goal-inner">
+    <div class="goal-icon">🏮</div>
+    <div class="goal-title">まち歩き完了！</div>
+    <div class="goal-sub">
+      増田の礎を歩き切りました。<br>
+      蔵通りの内蔵が夜に光ることから<br>
+      「蛍町」と呼ばれたこの地で、<br>
+      旅の締めくくりを。
+    </div>
+    <div class="goal-dots">
+      <div class="goal-dot">一</div>
+      <div class="goal-dot">二</div>
+      <div class="goal-dot">三</div>
+      <div class="goal-dot">★</div>
+    </div>
+    <button class="btn-restart" onclick="restart()">もう一度最初から</button>
+  </div>
+</div>
+
+<!-- デバッグパネル（開発用） -->
+<div class="debug-panel" id="debug-panel">
+  <div id="debug-pos">位置: --</div>
+  <div id="debug-dist">距離: --</div>
+  <div id="debug-acc">精度: --</div>
+</div>
+
+<script>
+// ══════════════════════════════
+// スポットデータ
+// ══════════════════════════════
+const SPOTS = [
+  {
+    name: "満福寺",
+    lat: 39.205493, lng: 140.547068,
+    badge: "SPOT 01 ／ 歴史の始まり",
+    numLabel: "一",
+    text: "増田にお城が築かれたのは1362年から1363年頃のこと。その城下を見守るように、同じ時代に建立されたのがこの満福寺です。\n\n600年以上の歳月を経てなお、増田という町の「始まり」を静かに伝え続ける場所です。お城と共に生まれたこの寺は、増田の歴史の礎そのものと言えるでしょう。",
+    keywords: ["曹洞宗", "1362〜63年建立", "増田城と同時期", "ころり観音"],
+    voiceApproach: "まもなく満福寺です。あと少しです。",
+    voiceArrive: "満福寺に到着しました。増田にお城が築かれた1362年頃、このお寺も同じ時代に建立されました。600年以上の時を経た今も、増田という町の始まりを静かに伝えています。"
+  },
+  {
+    name: "清真苑",
+    lat: 39.203338, lng: 140.547721,
+    badge: "SPOT 02 ／ 豪商の夢の跡",
+    numLabel: "二",
+    text: "かつてここには、増田銀行創業者のひとり・佐藤清十郎が建てた豪壮な別荘がありました。入母屋造の風格ある建物で、元総理大臣・斎藤実もここを訪れたと伝わります。\n\n今は公園として整備されていますが、名峰・真山を借景に取り込んだ庭園の構えに、明治期の豪商たちが増田に込めた誇りと夢が偲ばれます。",
+    keywords: ["増田銀行創業者", "佐藤清十郎", "入母屋造", "斎藤実（元総理）", "真山を借景"],
+    voiceApproach: "まもなく清真苑です。あと少しです。",
+    voiceArrive: "清真苑に到着しました。かつてここには、増田銀行創業者のひとり、佐藤清十郎の別荘がありました。元総理大臣の斎藤実も訪れたと伝わる、格式ある場所です。"
+  },
+  {
+    name: "北都銀行発祥の地碑",
+    lat: 39.202530, lng: 140.546177,
+    badge: "SPOT 03 ／ 商人たちの結束",
+    numLabel: "三",
+    text: "明治の初め、増田の有力商人たちが資金を出し合い、この地に増田銀行を設立しました。その後身が現在の北都銀行です。\n\nそしてもうひとつの縁——漫画「釣りキチ三平」の作者・矢口高雄先生は、漫画家になる前にこの銀行の行員として働いていました。増田の土壌が一人の稀代の漫画家を育てていたのです。",
+    keywords: ["増田銀行→北都銀行", "明治期設立", "矢口高雄先生", "釣りキチ三平", "地元商人の合資"],
+    voiceApproach: "まもなく北都銀行発祥の地碑です。あと少しです。",
+    voiceArrive: "北都銀行発祥の地碑に到着しました。明治の頃、増田の商人たちが資金を出し合い、ここに増田銀行を設立しました。漫画、釣りキチ三平の作者、矢口高雄先生も、漫画家になる前はこの銀行で働いていました。"
+  },
+  {
+    name: "増田町観光協会「ほたる」",
+    lat: 39.201564, lng: 140.546041,
+    badge: "GOAL ／ 旅の終わりに",
+    numLabel: "★",
+    text: "お疲れ様でした。ここが今日の旅のゴールです。\n\n「ほたる」という名前は、増田の内蔵が家の後ろで光ることから「蛍町」と呼ばれたのが由来と言われています。蔵の明かりが蛍のように夜の町に浮かぶ——そんな光景を想像しながら、増田の蔵通りをもう一度歩いてみてはいかがでしょうか。",
+    keywords: ["内蔵が光る＝蛍町", "重要伝統的建造物群保存地区", "内蔵見学", "増田の蔵通り"],
+    voiceApproach: "ゴールまであと少しです。もう少しです。",
+    voiceArrive: "ゴールの増田町観光案内所、ほたるに到着しました。お疲れ様でした。ほたるという名前は、増田の内蔵が夜に光る様子が蛍のようだったことに由来します。今日歩いた道が、この町の歴史の礎です。"
+  }
+];
+
+// ══════════════════════════════
+// 状態管理
+// ══════════════════════════════
+let currentSpot = 0;
+let watchId = null;
+let approachNotified = false;
+let arrivedDetected = false;
+let lastKnownDist = null;
+let debugMode = false; // 開発時はtrueにする
+
+// トリガー距離（メートル）
+const APPROACH_DIST = 50;  // 「あと少し」通知
+const ARRIVE_DIST   = 15;  // 自動到着判定
+
+// ══════════════════════════════
+// ユーティリティ
+// ══════════════════════════════
+function haversine(lat1, lng1, lat2, lng2) {
+  const R = 6371000;
+  const φ1 = lat1 * Math.PI / 180;
+  const φ2 = lat2 * Math.PI / 180;
+  const Δφ = (lat2 - lat1) * Math.PI / 180;
+  const Δλ = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(Δφ/2)**2 + Math.cos(φ1)*Math.cos(φ2)*Math.sin(Δλ/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ══════════════════════════════
+// 音声
+// ══════════════════════════════
+let lastVoiceText = '';
+
+function speak(text, onEnd) {
+  if (!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  lastVoiceText = text;
+
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = 'ja-JP';
+  utter.rate = 0.88;
+  utter.pitch = 1.0;
+  utter.volume = 1.0;
+
+  // 日本語音声を優先
+  const voices = speechSynthesis.getVoices();
+  const jaVoice = voices.find(v => v.lang.startsWith('ja'));
+  if (jaVoice) utter.voice = jaVoice;
+
+  if (onEnd) utter.onend = onEnd;
+
+  setVoiceLog('🔊', text);
+  speechSynthesis.speak(utter);
+}
+
+function replayVoice() {
+  if (lastVoiceText) speak(lastVoiceText);
+}
+
+function setVoiceLog(icon, text) {
+  document.getElementById('voice-log').querySelector('.voice-wave').textContent = icon;
+  document.getElementById('voice-log-text').textContent = text;
+}
+
+// ══════════════════════════════
+// GPS
+// ══════════════════════════════
+function startGPS() {
+  if (!navigator.geolocation) {
+    setGPSStatus('error', 'GPS非対応');
+    return;
+  }
+
+  setGPSStatus('searching', 'GPS取得中');
+
+  watchId = navigator.geolocation.watchPosition(
+    onGPSUpdate,
+    onGPSError,
+    { enableHighAccuracy: true, maximumAge: 3000, timeout: 15000 }
+  );
+}
+
+function stopGPS() {
+  if (watchId !== null) {
+    navigator.geolocation.clearWatch(watchId);
+    watchId = null;
+  }
+}
+
+function onGPSUpdate(pos) {
+  const { latitude, longitude, accuracy } = pos.coords;
+  setGPSStatus('active', `精度 ±${Math.round(accuracy)}m`);
+
+  const spot = SPOTS[currentSpot];
+  const dist = Math.round(haversine(latitude, longitude, spot.lat, spot.lng));
+  lastKnownDist = dist;
+
+  updateDistanceUI(dist);
+
+  if (debugMode) {
+    document.getElementById('debug-panel').classList.add('show');
+    document.getElementById('debug-pos').textContent = `位置: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+    document.getElementById('debug-dist').textContent = `距離: ${dist}m`;
+    document.getElementById('debug-acc').textContent = `精度: ±${Math.round(accuracy)}m`;
+  }
+
+  // 到着判定
+  if (!arrivedDetected && dist <= ARRIVE_DIST) {
+    arrivedDetected = true;
+    autoArrive();
+    return;
+  }
+
+  // 接近通知
+  if (!approachNotified && dist <= APPROACH_DIST && dist > ARRIVE_DIST) {
+    approachNotified = true;
+    speak(spot.voiceApproach);
+  }
+}
+
+function onGPSError(err) {
+  const msgs = { 1:'位置情報が許可されていません', 2:'位置を取得できません', 3:'タイムアウト' };
+  setGPSStatus('error', msgs[err.code] || 'GPS Error');
+  setVoiceLog('⚠️', '手動の「着いた！」ボタンをご利用ください');
+}
+
+function setGPSStatus(state, label) {
+  const dot = document.getElementById('gps-dot');
+  const lbl = document.getElementById('gps-label');
+  dot.className = 'gps-dot ' + state;
+  lbl.textContent = label;
+}
+
+// ══════════════════════════════
+// 距離UI
+// ══════════════════════════════
+function updateDistanceUI(dist) {
+  const panel = document.getElementById('distance-panel');
+  const numEl = document.getElementById('dist-number');
+  const statusEl = document.getElementById('dist-status');
+  const iconEl = document.getElementById('dist-icon');
+  const ringFill = document.getElementById('ring-fill');
+  const ringLabel = document.getElementById('ring-label');
+
+  numEl.innerHTML = `${dist}<span>m</span>`;
+
+  const maxDist = 400;
+  const ratio = Math.min(1, (maxDist - dist) / maxDist);
+  const circumference = 138;
+  ringFill.style.strokeDashoffset = circumference - (ratio * circumference);
+  ringLabel.textContent = dist <= 99 ? dist + 'm' : '遠';
+
+  panel.classList.remove('near', 'arrived');
+
+  if (dist <= ARRIVE_DIST) {
+    panel.classList.add('arrived');
+    iconEl.textContent = '🎯';
+    statusEl.textContent = '到着しました！';
+    ringFill.style.stroke = 'var(--green)';
+  } else if (dist <= APPROACH_DIST) {
+    panel.classList.add('near');
+    iconEl.textContent = '🏃';
+    statusEl.textContent = 'もうすぐです！';
+    ringFill.style.stroke = '#f0a040';
+  } else {
+    iconEl.textContent = '🚶';
+    statusEl.textContent = `${SPOTS[currentSpot].name} まで`;
+    ringFill.style.stroke = 'var(--vermillion)';
+  }
+}
+
+// ══════════════════════════════
+// ルート
+// ══════════════════════════════
+function buildSpotsRow() {
+  const row = document.getElementById('spots-row');
+  row.innerHTML = '';
+
+  SPOTS.forEach((spot, i) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'spot-dot-wrap';
+
+    const lineRow = document.createElement('div');
+    lineRow.className = 'dot-line-row';
+
+    if (i > 0) {
+      const line = document.createElement('div');
+      line.className = 'dot-line' + (i <= currentSpot ? ' done' : '');
+      lineRow.appendChild(line);
+    }
+
+    const dot = document.createElement('div');
+    let cls = 'spot-dot';
+    if (i < currentSpot) cls += ' done';
+    else if (i === currentSpot) cls += ' current';
+    dot.className = cls;
+    dot.textContent = spot.numLabel;
+    lineRow.appendChild(dot);
+
+    if (i < SPOTS.length - 1) {
+      const line2 = document.createElement('div');
+      line2.className = 'dot-line' + (i < currentSpot ? ' done' : '');
+      lineRow.appendChild(line2);
+    }
+
+    const label = document.createElement('div');
+    label.className = 'spot-dot-label';
+    label.textContent = spot.name;
+
+    wrap.appendChild(lineRow);
+    wrap.appendChild(label);
+    row.appendChild(wrap);
+  });
+}
+
+function updateNavScreen() {
+  const spot = SPOTS[currentSpot];
+  const progress = (currentSpot / (SPOTS.length - 1)) * 100;
+  document.getElementById('progress-fill').style.width = progress + '%';
+  document.getElementById('nav-step-label').textContent = `STEP ${currentSpot + 1} / ${SPOTS.length}`;
+  document.getElementById('nav-spot-name').textContent = spot.name + ' へ';
+  buildSpotsRow();
+
+  // リセット
+  approachNotified = false;
+  arrivedDetected = false;
+
+  // 距離UI初期化
+  document.getElementById('dist-number').innerHTML = '--<span>m</span>';
+  document.getElementById('dist-status').textContent = 'GPS位置情報を確認しています…';
+  document.getElementById('ring-fill').style.strokeDashoffset = 138;
+  document.getElementById('ring-label').textContent = '--';
+  document.getElementById('distance-panel').className = 'distance-panel';
+}
+
+// ══════════════════════════════
+// 到着処理
+// ══════════════════════════════
+function autoArrive() {
+  const spot = SPOTS[currentSpot];
+  showExplain(spot);
+  speak(spot.voiceArrive);
+}
+
+function manualArrive() {
+  const spot = SPOTS[currentSpot];
+  showExplain(spot);
+  speak(spot.voiceArrive);
+}
+
+function showExplain(spot) {
+  document.getElementById('explain-num-bg').textContent = spot.numLabel;
+  document.getElementById('explain-badge').textContent = spot.badge;
+  document.getElementById('explain-title').textContent = spot.name;
+  document.getElementById('explain-text').textContent = spot.text;
+
+  const kwDiv = document.getElementById('explain-keywords');
+  kwDiv.innerHTML = '';
+  spot.keywords.forEach(kw => {
+    const span = document.createElement('span');
+    span.className = 'explain-keyword';
+    span.textContent = kw;
+    kwDiv.appendChild(span);
+  });
+
+  const isLast = currentSpot === SPOTS.length - 1;
+  document.getElementById('btn-next').textContent = isLast ? '🏮 ゴールへ' : '次のスポットへ →';
+
+  showScreen('screen-explain');
+}
+
+// ══════════════════════════════
+// ナビゲーション
+// ══════════════════════════════
+function openMaps() {
+  const spot = SPOTS[currentSpot];
+  const url = `https://www.google.com/maps/dir/?api=1&destination=${spot.lat},${spot.lng}&travelmode=walking`;
+  window.open(url, '_blank');
+}
+
+function startTour() {
+  currentSpot = 0;
+  updateNavScreen();
+  showScreen('screen-nav');
+  startGPS();
+
+  // 出発案内
+  setTimeout(() => {
+    speak(`まち歩きを始めます。最初の目的地は${SPOTS[0].name}です。`);
+  }, 800);
+}
+
+function nextSpot() {
+  if (currentSpot === SPOTS.length - 1) {
+    stopGPS();
+    showScreen('screen-goal');
+    return;
+  }
+  currentSpot++;
+  updateNavScreen();
+  showScreen('screen-nav');
+
+  setTimeout(() => {
+    speak(`次は${SPOTS[currentSpot].name}です。`);
+  }, 500);
+}
+
+function restart() {
+  stopGPS();
+  currentSpot = 0;
+  showScreen('screen-start');
+}
+
+// 音声リスト初期化（ページ読み込み時）
+window.addEventListener('load', () => {
+  if ('speechSynthesis' in window) {
+    speechSynthesis.getVoices();
+    speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+  }
+});
+</script>
+</body>
+</html>

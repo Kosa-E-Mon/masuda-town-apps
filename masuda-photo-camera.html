@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>増田蔵カメラ</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;600;700&family=Shippori+Mincho:wght@400;600&family=Inter:wght@300;400;600&display=swap');
+
+  :root {
+    --ink:#1a1410; --paper:#f5f0e8; --kura:#2d2420; --kura2:#231e1b;
+    --gold:#c4922a; --glt:#e8b84b; --ash:#8a7f74; --bdr:rgba(196,146,42,0.28);
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{background:var(--kura2);color:var(--paper);font-family:'Noto Serif JP',sans-serif;min-height:100dvh;display:flex;flex-direction:column;overflow-x:hidden;}
+
+  .header{background:var(--ink);border-bottom:1px solid var(--bdr);padding:13px 18px 9px;flex-shrink:0;}
+  .header-title{font-family:'Shippori Mincho',serif;font-size:18px;color:var(--glt);letter-spacing:.06em;}
+  .header-sub{font-size:9px;color:var(--ash);letter-spacing:.18em;font-family:'Inter',sans-serif;}
+
+  .tabs{display:flex;background:var(--ink);border-bottom:1px solid var(--bdr);flex-shrink:0;}
+  .tab{flex:1;text-align:center;padding:10px 4px;font-size:11px;color:var(--ash);cursor:pointer;border-bottom:2px solid transparent;transition:color .2s,border-color .2s;letter-spacing:.06em;}
+  .tab.active{color:var(--glt);border-bottom-color:var(--gold);}
+
+  .page{display:none;flex:1;flex-direction:column;overflow-y:auto;}
+  .page.active{display:flex;}
+
+  /* ── SHOOT ── */
+  .shoot-hero{background:var(--ink);padding:20px 18px 16px;display:flex;flex-direction:column;align-items:center;gap:14px;flex-shrink:0;}
+  .thumb-box{width:100%;max-width:340px;aspect-ratio:4/3;border-radius:12px;border:1px solid var(--bdr);background:#0d0b09;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+  .thumb-ph{display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--ash);text-align:center;padding:20px;transition:opacity .3s;}
+  .thumb-ph.hidden{opacity:0;pointer-events:none;}
+  .thumb-ph .ico{font-size:46px;opacity:.4;}
+  .thumb-ph p{font-size:12px;line-height:1.7;}
+  #thumbImg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .3s;}
+  #thumbImg.loaded{opacity:1;}
+  .c{position:absolute;width:18px;height:18px;border-color:rgba(232,184,75,.45);border-style:solid;pointer-events:none;}
+  .c.tl{top:9px;left:9px;border-width:2px 0 0 2px}.c.tr{top:9px;right:9px;border-width:2px 2px 0 0}
+  .c.bl{bottom:9px;left:9px;border-width:0 0 2px 2px}.c.br{bottom:9px;right:9px;border-width:0 2px 2px 0}
+
+  .shoot-btns{display:flex;gap:10px;width:100%;max-width:340px;}
+  .btn-cam{flex:1;padding:14px 8px;border-radius:11px;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:'Noto Serif JP',serif;transition:all .18s;display:flex;align-items:center;justify-content:center;gap:6px;}
+  .btn-cam.g{background:var(--gold);color:var(--ink);box-shadow:0 4px 14px rgba(196,146,42,.3);}
+  .btn-cam.g:active{transform:scale(.96);}
+  .btn-cam.s{background:rgba(255,255,255,.07);color:var(--paper);border:1px solid var(--bdr);}
+
+  .tag-section{padding:14px 18px 22px;flex:1;}
+  .sec-lbl{font-size:10px;letter-spacing:.18em;color:var(--ash);text-transform:uppercase;margin-bottom:9px;font-family:'Inter',sans-serif;}
+  .tag-acts{display:flex;gap:7px;margin-bottom:10px;flex-wrap:wrap;}
+  .tact{padding:5px 11px;border-radius:14px;border:1px solid var(--bdr);background:transparent;color:var(--ash);font-size:11px;cursor:pointer;transition:all .2s;font-family:'Noto Serif JP',serif;}
+  .tact:hover{border-color:var(--gold);color:var(--glt);}
+  .tags-grid{display:flex;flex-wrap:wrap;gap:7px;}
+  .tag-chip{padding:7px 12px;border-radius:20px;border:1px solid var(--bdr);background:rgba(255,255,255,.05);color:var(--ash);font-size:13px;cursor:pointer;transition:all .18s;user-select:none;font-family:'Noto Serif JP',serif;}
+  .tag-chip.on{background:rgba(196,146,42,.22);border-color:var(--gold);color:var(--glt);}
+  .tag-preview{margin-top:12px;padding:10px 13px;background:rgba(255,255,255,.04);border:1px solid var(--bdr);border-radius:8px;font-size:12px;color:var(--ash);min-height:38px;word-break:break-all;line-height:1.8;}
+
+  /* ── PREVIEW ── */
+  .photo-area{background:#000;flex-shrink:0;position:relative;min-height:180px;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  #previewImg{width:100%;display:block;object-fit:contain;}
+  .photo-ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:var(--ash);font-size:13px;background:#111;}
+  .photo-ph .big{font-size:34px;opacity:.4;}
+
+  .prev-body{padding:14px 18px 32px;display:flex;flex-direction:column;gap:14px;flex:1;}
+
+  .caption-input{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--bdr);border-radius:8px;padding:9px 12px;color:var(--paper);font-size:13px;resize:none;font-family:'Noto Serif JP',serif;outline:none;transition:border-color .2s;line-height:1.6;}
+  .caption-input::placeholder{color:var(--ash);}
+  .caption-input:focus{border-color:var(--gold);}
+
+  .tags-display{background:rgba(255,255,255,.04);border:1px solid var(--bdr);border-radius:8px;padding:9px 12px;font-size:12px;color:var(--glt);word-break:break-all;line-height:1.9;font-family:'Noto Serif JP',serif;min-height:36px;}
+
+  /* ★ メイン共有ボタン */
+  .btn-main-share{
+    width:100%; padding:18px 12px;
+    border-radius:14px; border:none;
+    background:var(--gold);
+    color:var(--ink);
+    font-size:16px; font-weight:700;
+    cursor:pointer; font-family:'Shippori Mincho',serif;
+    letter-spacing:.06em;
+    box-shadow:0 6px 24px rgba(196,146,42,.4);
+    transition:all .18s;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .btn-main-share:active{transform:scale(.97);box-shadow:0 3px 12px rgba(196,146,42,.3);}
+  .btn-main-share .arrow{font-size:20px;}
+
+  .share-note{
+    background:rgba(196,146,42,.1); border:1px solid var(--bdr);
+    border-radius:10px; padding:11px 13px; font-size:12px;
+    color:var(--ash); line-height:1.9;
+  }
+  .share-note strong{color:var(--glt);}
+
+  /* SNS テキスト専用ボタン群 */
+  .text-only-title{
+    font-size:10px; letter-spacing:.15em; color:var(--ash);
+    text-transform:uppercase; font-family:'Inter',sans-serif;
+    display:flex; align-items:center; gap:8px;
+  }
+  .text-only-title::before,.text-only-title::after{content:'';flex:1;height:1px;background:var(--bdr);}
+
+  .sns-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  .sns-btn{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:4px; padding:11px 6px 9px; border-radius:11px; border:1px solid transparent;
+    cursor:pointer; transition:all .2s; font-family:'Noto Serif JP',serif;
+    position:relative;
+  }
+  .sns-btn .si{font-size:22px;line-height:1;}
+  .sns-btn .sl{font-size:11px;font-weight:600;}
+  .sns-btn .sb{
+    position:absolute; top:4px; right:4px;
+    font-size:7px; padding:1px 4px; border-radius:5px;
+    font-weight:700; font-family:'Inter',sans-serif; letter-spacing:.03em;
+  }
+  .sns-x {background:#0f0f0f;color:#fff;border-color:#333;} .sns-x:active{background:#222;} .sns-x .sb{background:#333;color:#999;}
+  .sns-th{background:#101010;color:#fff;border-color:#333;} .sns-th:active{background:#222;} .sns-th .sb{background:#333;color:#999;}
+  .sns-ln{background:#06c755;color:#fff;} .sns-ln:active{filter:brightness(.9);} .sns-ln .sb{background:rgba(0,0,0,.2);color:#fff;}
+  .sns-ig{background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);color:#fff;} .sns-ig:active{filter:brightness(.9);} .sns-ig .sb{background:rgba(0,0,0,.3);color:#fff;}
+  .sns-tt{background:#010101;color:#fff;border-color:#333;} .sns-tt:active{background:#222;} .sns-tt .sb{background:#333;color:#999;}
+  .sns-fb{background:#1877f2;color:#fff;} .sns-fb:active{filter:brightness(.9);} .sns-fb .sb{background:rgba(0,0,0,.2);color:#fff;}
+
+  .text-copy-note{font-size:10px;color:var(--ash);text-align:center;line-height:1.6;}
+
+  .util-row{display:flex;gap:8px;}
+  .util-btn{flex:1;padding:10px;border-radius:9px;background:rgba(255,255,255,.06);color:var(--ash);border:1px solid var(--bdr);font-size:12px;cursor:pointer;font-family:'Noto Serif JP',serif;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:4px;}
+  .util-btn:hover{background:rgba(255,255,255,.11);color:var(--paper);}
+  .util-btn.red{border-color:rgba(139,32,32,.4);color:#a04040;}
+  .util-btn.red:hover{background:rgba(139,32,32,.12);color:#d06060;}
+
+  /* ── MANAGE ── */
+  .manage-body{padding:16px 18px 32px;display:flex;flex-direction:column;gap:18px;}
+  .block{background:rgba(255,255,255,.04);border:1px solid var(--bdr);border-radius:12px;padding:14px;}
+  .block-title{font-family:'Shippori Mincho',serif;font-size:14px;color:var(--glt);margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid var(--bdr);letter-spacing:.06em;}
+  .hint{font-size:11px;color:var(--ash);line-height:1.7;margin-bottom:10px;}
+  .add-row{display:flex;gap:8px;margin-bottom:8px;}
+  .f-input{flex:1;background:rgba(255,255,255,.06);border:1px solid var(--bdr);border-radius:8px;padding:8px 11px;color:var(--paper);font-size:13px;outline:none;font-family:'Noto Serif JP',serif;transition:border-color .2s;width:100%;}
+  .f-input::placeholder{color:var(--ash);}
+  .f-input:focus{border-color:var(--gold);}
+  textarea.f-input{resize:none;line-height:1.6;}
+  .btn-gold{padding:8px 14px;border-radius:8px;background:var(--gold);color:var(--ink);font-size:13px;font-weight:600;border:none;cursor:pointer;font-family:'Noto Serif JP',serif;white-space:nowrap;transition:background .2s;}
+  .btn-gold:hover{background:var(--glt);}
+  .tag-row{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;background:rgba(255,255,255,.04);margin-bottom:5px;}
+  .tag-row span{flex:1;font-size:13px;}
+  .del-btn{width:25px;height:25px;border-radius:50%;border:1px solid rgba(139,32,32,.5);background:transparent;color:#a04040;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;}
+  .del-btn:hover{background:rgba(139,32,32,.2);color:#d06060;}
+  .set-card{border:1px solid var(--bdr);border-radius:9px;padding:10px 12px;margin-bottom:7px;}
+  .set-hdr{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+  .set-name{flex:1;font-size:13px;color:var(--glt);font-family:'Shippori Mincho',serif;}
+  .set-tags{display:flex;flex-wrap:wrap;gap:5px;}
+  .set-badge{padding:3px 8px;border-radius:12px;border:1px solid var(--bdr);font-size:11px;color:var(--ash);}
+  .notice{background:rgba(196,146,42,.09);border:1px solid var(--bdr);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--ash);line-height:1.9;}
+  .notice strong{color:var(--glt);}
+
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--gold);color:var(--ink);padding:10px 20px;border-radius:24px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:all .28s;z-index:9999;white-space:nowrap;max-width:88vw;text-align:center;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .hidden{display:none!important;}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<header class="header">
+  <div class="header-title">増田蔵カメラ</div>
+  <div class="header-sub">SNS PHOTO TOOL · MASUDA</div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" id="tab-shoot"   onclick="showTab('shoot')">📷 撮影</div>
+  <div class="tab"        id="tab-preview" onclick="showTab('preview')">🖼️ 共有</div>
+  <div class="tab"        id="tab-manage"  onclick="showTab('manage')">⚙️ 管理</div>
+</div>
+
+<!-- ══ SHOOT ══ -->
+<div class="page active" id="page-shoot">
+  <div class="shoot-hero">
+    <div class="thumb-box">
+      <div class="c tl"></div><div class="c tr"></div>
+      <div class="c bl"></div><div class="c br"></div>
+      <div class="thumb-ph" id="thumbPH">
+        <div class="ico">🏯</div>
+        <p>ボタンを押して写真を撮影してください</p>
+      </div>
+      <img id="thumbImg" alt="" src="">
+    </div>
+    <div class="shoot-btns">
+      <button class="btn-cam g" onclick="openCamera()">📷 カメラを起動</button>
+      <button class="btn-cam s" onclick="openGallery()">🖼️ ギャラリー</button>
+    </div>
+  </div>
+
+  <div class="tag-section">
+    <div class="sec-lbl">ハッシュタグ選択（タップで ON/OFF）</div>
+    <div class="tag-acts">
+      <button class="tact" onclick="selectAll()">すべて選択</button>
+      <button class="tact" onclick="clearAll()">解除</button>
+      <button class="tact" onclick="copyTagsOnly()">タグだけコピー</button>
+    </div>
+    <div class="tags-grid" id="tagsGrid"></div>
+    <div class="tag-preview" id="tagPreview">
+      <span style="color:var(--ash)">タグをタップして選択してください</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PREVIEW / SHARE ══ -->
+<div class="page" id="page-preview">
+  <div class="photo-area" id="photoArea">
+    <div class="photo-ph" id="photoPH">
+      <span class="big">📷</span>
+      <span>まだ写真がありません</span>
+    </div>
+    <img id="previewImg" alt="撮影写真" style="display:none">
+  </div>
+
+  <div class="prev-body">
+    <!-- キャプション -->
+    <textarea class="caption-input" id="captionInput" rows="2"
+      placeholder="キャプション（任意）例：今日の増田蔵の町🏯"></textarea>
+
+    <!-- ハッシュタグ表示 -->
+    <div>
+      <div class="sec-lbl">選択中のハッシュタグ</div>
+      <div class="tags-display" id="tagsDisplay">（未選択）</div>
+    </div>
+
+    <!-- ★ メイン共有ボタン -->
+    <button class="btn-main-share" onclick="shareNative()">
+      <span class="arrow">📤</span>
+      写真＋テキストをSNSへ共有
+    </button>
+
+    <div class="share-note">
+      <strong>↑ このボタンが一番確実です</strong><br>
+      スマホの共有シートが開きます。そこから <strong>Instagram・X・Threads・LINE</strong> など好きなアプリを選んでください。写真もテキストも一緒に渡されます。
+    </div>
+
+    <!-- 区切り -->
+    <div class="text-only-title">テキストだけコピー → アプリを開く</div>
+
+    <div class="sns-grid">
+      <button class="sns-btn sns-x"  onclick="textCopyOpen('x')">
+        <span class="si">𝕏</span><span class="sl">X</span><span class="sb">テキスト</span>
+      </button>
+      <button class="sns-btn sns-th" onclick="textCopyOpen('threads')">
+        <span class="si">🧵</span><span class="sl">Threads</span><span class="sb">テキスト</span>
+      </button>
+      <button class="sns-btn sns-ln" onclick="textCopyOpen('line')">
+        <span class="si">💬</span><span class="sl">LINE</span><span class="sb">テキスト</span>
+      </button>
+      <button class="sns-btn sns-ig" onclick="textCopyOpen('instagram')">
+        <span class="si">📸</span><span class="sl">Instagram</span><span class="sb">テキスト</span>
+      </button>
+      <button class="sns-btn sns-tt" onclick="textCopyOpen('tiktok')">
+        <span class="si">🎵</span><span class="sl">TikTok</span><span class="sb">テキスト</span>
+      </button>
+      <button class="sns-btn sns-fb" onclick="textCopyOpen('facebook')">
+        <span class="si">👤</span><span class="sl">Facebook</span><span class="sb">テキスト</span>
+      </button>
+    </div>
+
+    <div class="text-copy-note">
+      ※ これらのボタンはテキスト（ハッシュタグ）をコピーしてアプリを開きます。<br>
+      写真を一緒に投稿するには、アプリ内で写真を手動で添付してください。
+    </div>
+
+    <!-- ユーティリティ -->
+    <div class="util-row">
+      <button class="util-btn" onclick="copyAll()">📋 全てコピー</button>
+      <button class="util-btn" onclick="downloadPhoto()">💾 写真を保存</button>
+      <button class="util-btn red" onclick="resetPhoto()">🗑️ 撮り直し</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MANAGE ══ -->
+<div class="page" id="page-manage">
+  <div class="manage-body">
+    <div class="block">
+      <div class="block-title">🏷️ ハッシュタグ一覧</div>
+      <div class="hint"># は自動付与。スペース不要。</div>
+      <div class="add-row">
+        <input class="f-input" id="newTagInput" placeholder="例：増田蔵の町" onkeydown="if(event.key==='Enter')addTag()">
+        <button class="btn-gold" onclick="addTag()">追加</button>
+      </div>
+      <div id="tagListEl"></div>
+    </div>
+
+    <div class="block">
+      <div class="block-title">📦 プリセットセット</div>
+      <div class="hint">「適用」でカメラ画面にまとめて反映されます。</div>
+      <div id="setsEl"></div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
+        <input  class="f-input" id="newSetName" placeholder="セット名（例：蔵の町観光）">
+        <textarea class="f-input" id="newSetTags" rows="3" placeholder="タグをスペースか改行で&#10;例：#マスダ #増田蔵の町 #秋田"></textarea>
+        <button class="btn-gold" style="width:100%" onclick="addSet()">セットを保存</button>
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="block-title">📱 共有の仕組みについて</div>
+      <div class="notice">
+        <strong>【写真＋テキストを一緒に投稿するには】</strong><br>
+        「写真＋テキストをSNSへ共有」ボタン → OS の共有シート → 好きなアプリを選択<br><br>
+        <strong>【各SNSボタンの役割】</strong><br>
+        テキスト（キャプション＋ハッシュタグ）をクリップボードにコピーして、そのアプリを開きます。写真はアプリ内で手動で添付が必要です。<br><br>
+        <strong>これはブラウザの制限</strong>であり、どんなアプリでも URL経由でSNSに写真を直接渡すことはできません。
+      </div>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="cameraInput"  accept="image/*" capture="environment" class="hidden" onchange="onPhoto(event)">
+<input type="file" id="galleryInput" accept="image/*"                        class="hidden" onchange="onPhoto(event)">
+
+<script>
+'use strict';
+const K_TAGS='masudacam_tags', K_SETS='masudacam_sets';
+let selected=new Set(), capturedBlob=null, capturedObjURL=null;
+
+function loadTags(){try{const s=localStorage.getItem(K_TAGS);if(s)return JSON.parse(s);}catch(e){}return['#マスダ','#増田蔵の町','#秋田','#横手','#akita','#masuda','#蔵の町','#観光','#増田','#伝統文化','#東北','#japan'];}
+function saveTags(t){localStorage.setItem(K_TAGS,JSON.stringify(t));}
+function loadSets(){try{const s=localStorage.getItem(K_SETS);if(s)return JSON.parse(s);}catch(e){}return[{name:'増田観光セット',tags:['#マスダ','#増田蔵の町','#秋田','#横手','#観光']},{name:'盆踊りセット',tags:['#増田','#盆踊り','#伝統文化','#秋田','#masuda']}];}
+function saveSets(s){localStorage.setItem(K_SETS,JSON.stringify(s));}
+
+function showTab(name){
+  ['shoot','preview','manage'].forEach(n=>{
+    document.getElementById('page-'+n).classList.toggle('active',n===name);
+    document.getElementById('tab-'+n).classList.toggle('active',n===name);
+  });
+  if(name==='preview')syncPreview();
+  if(name==='manage')renderManage();
+}
+
+function openCamera(){document.getElementById('cameraInput').click();}
+function openGallery(){document.getElementById('galleryInput').click();}
+
+function onPhoto(e){
+  const file=e.target.files[0]; if(!file)return;
+  e.target.value='';
+  capturedBlob=file;
+  if(capturedObjURL){URL.revokeObjectURL(capturedObjURL);}
+  capturedObjURL=URL.createObjectURL(file);
+  const thumb=document.getElementById('thumbImg');
+  thumb.onload=()=>thumb.classList.add('loaded');
+  thumb.src=capturedObjURL;
+  document.getElementById('thumbPH').classList.add('hidden');
+  showTab('preview');
+}
+
+function renderTagGrid(){
+  const grid=document.getElementById('tagsGrid'); grid.innerHTML='';
+  loadTags().forEach(tag=>{
+    const c=document.createElement('div');
+    c.className='tag-chip'+(selected.has(tag)?' on':'');
+    c.textContent=tag;
+    c.onclick=()=>{selected.has(tag)?selected.delete(tag):selected.add(tag);c.classList.toggle('on');updateTagPreview();};
+    grid.appendChild(c);
+  });
+  updateTagPreview();
+}
+function updateTagPreview(){
+  const el=document.getElementById('tagPreview');
+  el.innerHTML=selected.size===0?'<span style="color:var(--ash)">タグをタップして選択してください</span>':'<span style="color:var(--glt)">'+[...selected].join('　')+'</span>';
+}
+function selectAll(){loadTags().forEach(t=>selected.add(t));renderTagGrid();}
+function clearAll(){selected.clear();renderTagGrid();}
+function getTagStr(){return[...selected].join(' ');}
+function copyTagsOnly(){const s=getTagStr();if(!s){toast('タグが選択されていません');return;}copyText(s);}
+
+function syncPreview(){
+  const img=document.getElementById('previewImg'),ph=document.getElementById('photoPH');
+  if(capturedObjURL){
+    img.onload=()=>{img.style.display='block';ph.style.display='none';};
+    img.onerror=()=>{img.style.display='none';ph.style.display='flex';};
+    if(img.src!==capturedObjURL)img.src=capturedObjURL;
+    else{img.style.display='block';ph.style.display='none';}
+  }else{
+    img.style.display='none'; img.src=''; ph.style.display='flex';
+  }
+  document.getElementById('tagsDisplay').textContent=getTagStr()||'（ハッシュタグ未選択）';
+}
+
+function getShareText(){
+  const cap=document.getElementById('captionInput').value.trim(),tags=getTagStr();
+  return[cap,tags].filter(Boolean).join('\n\n');
+}
+
+/* ★ メイン共有：Web Share API で写真＋テキスト */
+async function shareNative(){
+  if(!capturedBlob){toast('先に写真を撮影してください');return;}
+  const text=getShareText();
+  if(!navigator.share){
+    // PCなど非対応環境
+    copyText(text);
+    toast('お使いの環境は共有シート非対応です。テキストをコピーしました。');
+    return;
+  }
+  try{
+    const file=new File([capturedBlob],'masuda.jpg',{type:capturedBlob.type||'image/jpeg'});
+    // 写真＋テキスト同時共有を試みる
+    if(navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],text});
+      return;
+    }
+    // ファイル共有非対応ならテキストのみ
+    await navigator.share({text});
+  }catch(e){
+    if(e.name==='AbortError')return; // ユーザーがキャンセル
+    // エラー時はフォールバック
+    copyText(text);
+    toast('共有に失敗しました。テキストをコピーしました。');
+  }
+}
+
+/* テキストコピー ＋ アプリを開く */
+const SNS_URLS={
+  x:       text=>'https://twitter.com/intent/tweet?text='+encodeURIComponent(text),
+  threads: text=>'https://www.threads.net/intent/post?text='+encodeURIComponent(text),
+  line:    text=>'https://line.me/R/msg/text/?'+encodeURIComponent(text),
+  instagram:()=>'https://www.instagram.com/',
+  tiktok:  ()=>'https://www.tiktok.com/',
+  facebook:()=>'https://www.facebook.com/',
+};
+
+function textCopyOpen(sns){
+  const text=getShareText();
+  // テキストをコピー
+  copyText(text);
+  // アプリを開く
+  const urlFn=SNS_URLS[sns];
+  const url=urlFn(text);
+  setTimeout(()=>window.open(url,'_blank'),400);
+  toast('テキストをコピーしました。アプリ内に貼り付けてください。');
+}
+
+function copyAll(){const t=getShareText();if(!t){toast('コピーするものがありません');return;}copyText(t);}
+
+function downloadPhoto(){
+  if(!capturedBlob){toast('先に写真を撮影してください');return;}
+  const a=document.createElement('a');
+  a.href=capturedObjURL;
+  a.download='masuda_'+new Date().toISOString().slice(0,10)+'.jpg';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  toast('写真を保存しました 💾');
+}
+
+function resetPhoto(){
+  if(!confirm('写真をリセットしますか？'))return;
+  if(capturedObjURL){URL.revokeObjectURL(capturedObjURL);capturedObjURL=null;}
+  capturedBlob=null;
+  const t=document.getElementById('thumbImg'); t.src=''; t.classList.remove('loaded');
+  document.getElementById('thumbPH').classList.remove('hidden');
+  showTab('shoot');
+}
+
+/* MANAGE */
+function renderManage(){
+  const el=document.getElementById('tagListEl'); el.innerHTML='';
+  loadTags().forEach(tag=>{
+    const row=document.createElement('div'); row.className='tag-row';
+    row.innerHTML=`<span>${tag}</span><button class="del-btn" onclick="delTag('${esc(tag)}')">✕</button>`;
+    el.appendChild(row);
+  });
+  renderSets();
+}
+function addTag(){
+  let v=document.getElementById('newTagInput').value.trim().replace(/\s+/g,'');
+  if(!v)return;
+  if(!v.startsWith('#'))v='#'+v;
+  const tags=loadTags();
+  if(tags.includes(v)){toast('すでに存在します');return;}
+  tags.push(v);saveTags(tags);
+  document.getElementById('newTagInput').value='';
+  renderTagGrid();renderManage();
+}
+function delTag(tag){
+  if(!confirm(`「${tag}」を削除しますか？`))return;
+  saveTags(loadTags().filter(t=>t!==tag));
+  selected.delete(tag);renderTagGrid();renderManage();
+}
+function addSet(){
+  const name=document.getElementById('newSetName').value.trim();
+  const raw=document.getElementById('newSetTags').value.trim();
+  if(!name||!raw){toast('名前とタグを入力してください');return;}
+  const tags=raw.split(/[\s\n]+/).filter(Boolean).map(t=>{t=t.replace(/\s+/g,'');return t.startsWith('#')?t:'#'+t;});
+  const sets=loadSets();sets.push({name,tags});saveSets(sets);
+  document.getElementById('newSetName').value='';document.getElementById('newSetTags').value='';
+  renderSets();toast('セットを保存しました');
+}
+function applySet(i){
+  const set=loadSets()[i];if(!set)return;
+  selected.clear();set.tags.forEach(t=>selected.add(t));
+  renderTagGrid();showTab('shoot');toast(`「${set.name}」を適用しました`);
+}
+function delSet(i){
+  const sets=loadSets();
+  if(!confirm(`「${sets[i].name}」を削除しますか？`))return;
+  sets.splice(i,1);saveSets(sets);renderSets();
+}
+function renderSets(){
+  const el=document.getElementById('setsEl');el.innerHTML='';
+  loadSets().forEach((set,i)=>{
+    const d=document.createElement('div');d.className='set-card';
+    d.innerHTML=`<div class="set-hdr"><span class="set-name">${set.name}</span>
+      <button class="btn-gold" style="padding:5px 10px;font-size:11px" onclick="applySet(${i})">適用</button>
+      <button class="del-btn" onclick="delSet(${i})">✕</button></div>
+      <div class="set-tags">${set.tags.map(t=>`<span class="set-badge">${t}</span>`).join('')}</div>`;
+    el.appendChild(d);
+  });
+}
+
+function copyText(text){
+  if(navigator.clipboard?.writeText){navigator.clipboard.writeText(text).then(()=>toast('コピーしました！'));}
+  else{const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.focus();ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('コピーしました！');}
+}
+function toast(msg){
+  const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');
+  clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove('show'),3200);
+}
+function esc(s){return s.replace(/'/g,"\\'")}
+
+renderTagGrid();
+</script>
+</body>
+</html>
