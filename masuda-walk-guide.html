@@ -7,8 +7,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="増田まち歩き">
-<title>増田まち歩きガイド v2</title>
+<title>増田まち歩きガイド v3</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;600;700&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
   :root {
     --bg: #F4EFE4;
@@ -48,7 +50,7 @@
     color: var(--bg);
     align-items: center;
     justify-content: center;
-    padding: 48px 28px;
+    padding: 40px 28px;
     position: relative;
   }
 
@@ -68,7 +70,7 @@
     font-size: 10px;
     letter-spacing: 0.25em;
     padding: 4px 14px;
-    margin-bottom: 28px;
+    margin-bottom: 24px;
   }
 
   .start-title {
@@ -77,88 +79,68 @@
     font-weight: 700;
     line-height: 1.2;
     letter-spacing: 0.05em;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     color: #FAF7F1;
   }
 
-  .start-version {
-    font-size: 10px;
-    color: var(--vermillion);
-    letter-spacing: 0.2em;
-    margin-bottom: 8px;
-  }
+  .start-version { font-size: 10px; color: var(--vermillion); letter-spacing: 0.2em; margin-bottom: 6px; }
+  .start-subtitle { font-size: 12px; color: rgba(250,247,241,0.4); letter-spacing: 0.12em; margin-bottom: 32px; }
 
-  .start-subtitle {
-    font-size: 12px;
-    color: rgba(250,247,241,0.45);
-    letter-spacing: 0.12em;
-    margin-bottom: 40px;
-  }
-
-  .spot-preview {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-bottom: 40px;
-    text-align: left;
-  }
+  .spot-preview { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; text-align: left; }
 
   .spot-preview-item {
-    display: flex;
-    align-items: center;
-    gap: 14px;
+    display: flex; align-items: center; gap: 14px;
     background: rgba(255,255,255,0.05);
     border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 8px;
-    padding: 10px 14px;
+    border-radius: 8px; padding: 10px 14px;
+    position: relative; overflow: hidden;
   }
 
-  .spot-num-small {
-    font-family: 'Noto Serif JP', serif;
-    font-size: 18px;
-    color: var(--vermillion);
-    min-width: 22px;
+  .spot-preview-item.completed { border-color: rgba(154,122,58,0.4); }
+  .spot-preview-item.completed::after {
+    content: '✓';
+    position: absolute; right: 14px;
+    color: var(--gold); font-size: 14px; font-weight: 700;
   }
 
+  .spot-num-small { font-family: 'Noto Serif JP', serif; font-size: 18px; color: var(--vermillion); min-width: 22px; }
   .spot-preview-name { font-size: 13px; color: rgba(250,247,241,0.85); font-weight: 500; flex: 1; }
   .spot-preview-dist { font-size: 10px; color: rgba(250,247,241,0.3); }
 
   .gps-notice {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    background: rgba(58,122,74,0.15);
-    border: 1px solid rgba(58,122,74,0.3);
-    border-radius: 8px;
-    padding: 12px 14px;
-    margin-bottom: 28px;
-    text-align: left;
-    font-size: 11px;
-    color: rgba(250,247,241,0.65);
-    line-height: 1.7;
-    letter-spacing: 0.04em;
+    display: flex; align-items: flex-start; gap: 10px;
+    background: rgba(58,122,74,0.12);
+    border: 1px solid rgba(58,122,74,0.25);
+    border-radius: 8px; padding: 11px 14px;
+    margin-bottom: 20px; text-align: left;
+    font-size: 11px; color: rgba(250,247,241,0.6);
+    line-height: 1.7; letter-spacing: 0.04em;
   }
 
-  .gps-notice-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .gps-notice-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
 
   .btn-start {
-    background: var(--vermillion);
-    color: white;
-    border: none;
-    padding: 16px;
-    font-family: 'Noto Serif JP', serif;
-    font-size: 16px;
-    letter-spacing: 0.15em;
-    border-radius: 4px;
-    cursor: pointer;
-    width: 100%;
-    transition: opacity 0.2s;
-    margin-bottom: 12px;
+    background: var(--vermillion); color: white; border: none;
+    padding: 15px; font-family: 'Noto Serif JP', serif;
+    font-size: 15px; letter-spacing: 0.15em; border-radius: 4px;
+    cursor: pointer; width: 100%; transition: opacity 0.2s; margin-bottom: 10px;
   }
 
   .btn-start:active { opacity: 0.8; }
 
-  .walk-info { font-size: 11px; color: rgba(250,247,241,0.3); letter-spacing: 0.08em; }
+  .btn-prizes {
+    background: transparent;
+    border: 1px solid rgba(250,247,241,0.2);
+    color: rgba(250,247,241,0.55);
+    padding: 12px; font-size: 13px;
+    letter-spacing: 0.1em; border-radius: 4px;
+    cursor: pointer; width: 100%;
+    transition: border-color 0.2s, color 0.2s;
+    margin-bottom: 12px;
+  }
+
+  .btn-prizes:active { border-color: var(--gold); color: var(--gold); }
+  .walk-info { font-size: 11px; color: rgba(250,247,241,0.25); letter-spacing: 0.08em; }
 
   /* ══ NAV ══ */
   #screen-nav { background: var(--bg); }
@@ -166,438 +148,368 @@
   .nav-header {
     background: var(--paper);
     border-bottom: 1px solid var(--border);
-    padding: 14px 20px 12px;
+    padding: 13px 20px 11px;
   }
 
-  .nav-progress-bar {
-    height: 3px;
-    background: var(--border);
-    border-radius: 2px;
-    margin-bottom: 10px;
-    overflow: hidden;
-  }
-
-  .nav-progress-fill {
-    height: 100%;
-    background: var(--vermillion);
-    border-radius: 2px;
-    transition: width 0.5s ease;
-  }
+  .nav-progress-bar { height: 3px; background: var(--border); border-radius: 2px; margin-bottom: 9px; overflow: hidden; }
+  .nav-progress-fill { height: 100%; background: var(--vermillion); border-radius: 2px; transition: width 0.5s ease; }
 
   .nav-top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
   .nav-step-label { font-size: 10px; color: var(--muted); letter-spacing: 0.15em; }
 
-  .gps-status {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 10px;
-    color: var(--muted);
-  }
-
-  .gps-dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: #ccc;
-    transition: background 0.3s;
-  }
-
+  .gps-status { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--muted); }
+  .gps-dot { width: 7px; height: 7px; border-radius: 50%; background: #ccc; transition: background 0.3s; }
   .gps-dot.searching { background: #f0a040; animation: blink 1s infinite; }
   .gps-dot.active { background: var(--green); }
   .gps-dot.error { background: var(--vermillion); }
-
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-  .nav-spot-name {
-    font-family: 'Noto Serif JP', serif;
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--ink);
-  }
+  .nav-spot-name { font-family: 'Noto Serif JP', serif; font-size: 20px; font-weight: 700; color: var(--ink); }
 
-  /* ── 距離インジケーター ── */
+  /* ── 距離パネル ── */
   .distance-panel {
-    margin: 16px 20px 0;
-    background: var(--paper);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px 18px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
+    margin: 12px 20px 0;
+    background: var(--paper); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 13px 16px;
+    display: flex; align-items: center; gap: 12px;
     transition: border-color 0.4s, background 0.4s;
   }
 
-  .distance-panel.near {
-    border-color: #f0a040;
-    background: #fffbf0;
-  }
+  .distance-panel.near { border-color: #f0a040; background: #fffbf0; }
+  .distance-panel.arrived { border-color: var(--green); background: #f0fff4; }
 
-  .distance-panel.arrived {
-    border-color: var(--green);
-    background: #f0fff4;
-  }
-
-  .dist-icon { font-size: 28px; }
-
+  .dist-icon { font-size: 26px; }
   .dist-info { flex: 1; }
+  .dist-number { font-family: 'Noto Serif JP', serif; font-size: 26px; font-weight: 700; color: var(--ink); line-height: 1; }
+  .dist-number span { font-size: 12px; font-family: 'Noto Sans JP', sans-serif; font-weight: 400; margin-left: 3px; color: var(--muted); }
+  .dist-status { font-size: 11px; color: var(--muted); margin-top: 3px; letter-spacing: 0.04em; }
 
-  .dist-number {
-    font-family: 'Noto Serif JP', serif;
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--ink);
-    line-height: 1;
-  }
-
-  .dist-number span { font-size: 13px; font-family: 'Noto Sans JP', sans-serif; font-weight: 400; margin-left: 3px; color: var(--muted); }
-
-  .dist-status { font-size: 11px; color: var(--muted); margin-top: 3px; letter-spacing: 0.05em; }
-
-  /* ── プログレスリング ── */
-  .ring-wrap {
-    position: relative;
-    width: 52px; height: 52px;
-    flex-shrink: 0;
-  }
-
+  .ring-wrap { position: relative; width: 48px; height: 48px; flex-shrink: 0; }
   .ring-svg { transform: rotate(-90deg); }
-
   .ring-bg { fill: none; stroke: var(--border); stroke-width: 4; }
-
-  .ring-fill {
-    fill: none;
-    stroke: var(--vermillion);
-    stroke-width: 4;
-    stroke-linecap: round;
-    stroke-dasharray: 138;
-    stroke-dashoffset: 138;
-    transition: stroke-dashoffset 0.6s ease, stroke 0.4s;
-  }
-
-  .ring-label {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 9px;
-    color: var(--muted);
-    font-weight: 500;
-  }
-
-  /* ── マップエリア ── */
-  .map-area {
-    margin: 12px 20px 0;
-    border-radius: var(--radius);
-    overflow: hidden;
-    background: #E8E2D8;
-    height: 130px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 8px;
-    position: relative;
-    cursor: pointer;
-    border: 1px solid var(--border);
-  }
-
-  .map-dots {
-    position: absolute; inset: 0;
-    background-image: radial-gradient(circle, rgba(0,0,0,0.06) 1px, transparent 1px);
-    background-size: 18px 18px;
-  }
-
-  .map-pin {
-    position: relative; z-index: 2;
-    width: 40px; height: 40px;
-    background: var(--vermillion);
-    border-radius: 50% 50% 50% 0;
-    transform: rotate(-45deg);
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 4px 12px rgba(184,50,50,0.35);
-  }
-
-  .map-pin-inner { transform: rotate(45deg); font-size: 18px; }
-
-  .map-open-label {
-    position: relative; z-index: 2;
-    font-size: 12px; color: var(--muted);
-    letter-spacing: 0.08em;
-  }
-
-  /* ── スポットドット ── */
-  .spots-row {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding: 14px 16px 0;
-  }
-
-  .spot-dot-wrap {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    flex: 1;
-  }
-
-  .dot-line-row { display: flex; align-items: center; width: 100%; }
-
-  .dot-line {
-    height: 2px;
-    background: var(--border);
-    flex: 1;
-    transition: background 0.4s;
-  }
-
-  .dot-line.done { background: var(--vermillion); }
-
-  .spot-dot {
-    width: 30px; height: 30px;
-    border-radius: 50%;
-    background: #C8C0B0;
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Noto Serif JP', serif;
-    font-size: 12px; font-weight: 600;
-    color: white;
-    flex-shrink: 0;
-    transition: background 0.3s, transform 0.3s;
-    position: relative; z-index: 1;
-  }
-
-  .spot-dot.done { background: var(--gold); }
-  .spot-dot.current { background: var(--vermillion); transform: scale(1.15); }
-
-  .spot-dot-label {
-    font-size: 9px; color: var(--muted);
-    margin-top: 5px; text-align: center;
-    max-width: 58px; line-height: 1.4;
-  }
-
-  /* ── ボタンエリア ── */
-  .arrive-section { padding: 14px 20px 28px; display: flex; flex-direction: column; gap: 10px; margin-top: auto; }
-
-  .btn-arrived {
-    background: var(--paper);
-    border: 2px solid var(--ink);
-    color: var(--ink);
-    padding: 15px;
-    font-family: 'Noto Serif JP', serif;
-    font-size: 14px;
-    letter-spacing: 0.12em;
-    border-radius: var(--radius);
-    cursor: pointer;
-    width: 100%;
-    transition: background 0.2s, color 0.2s;
-  }
-
-  .btn-arrived:active { background: var(--ink); color: var(--paper); }
-
-  .manual-hint { font-size: 10px; color: var(--muted); text-align: center; letter-spacing: 0.06em; }
+  .ring-fill { fill: none; stroke: var(--vermillion); stroke-width: 4; stroke-linecap: round; stroke-dasharray: 126; stroke-dashoffset: 126; transition: stroke-dashoffset 0.6s ease, stroke 0.4s; }
+  .ring-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 8px; color: var(--muted); font-weight: 500; }
 
   /* ── 音声ログ ── */
   .voice-log {
-    margin: 0 20px;
-    background: rgba(58,122,74,0.08);
-    border: 1px solid rgba(58,122,74,0.2);
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-size: 11px;
-    color: var(--green);
-    min-height: 36px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    letter-spacing: 0.04em;
-    line-height: 1.5;
+    margin: 10px 20px 0;
+    background: rgba(58,122,74,0.07);
+    border: 1px solid rgba(58,122,74,0.18);
+    border-radius: 8px; padding: 9px 14px;
+    font-size: 11px; color: var(--green);
+    min-height: 34px; display: flex; align-items: center; gap: 8px;
+    letter-spacing: 0.04em; line-height: 1.5;
   }
 
-  .voice-wave { font-size: 16px; }
+  /* ── Leafletマップ ── */
+  .map-container {
+    margin: 10px 20px 0;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    height: 180px;
+    position: relative;
+  }
+
+  #leaflet-map { width: 100%; height: 100%; }
+
+  /* ── スポットドット ── */
+  .spots-row { display: flex; justify-content: center; align-items: flex-start; padding: 12px 16px 0; }
+  .spot-dot-wrap { display: flex; flex-direction: column; align-items: center; flex: 1; }
+  .dot-line-row { display: flex; align-items: center; width: 100%; }
+  .dot-line { height: 2px; background: var(--border); flex: 1; transition: background 0.4s; }
+  .dot-line.done { background: var(--vermillion); }
+  .spot-dot {
+    width: 28px; height: 28px; border-radius: 50%; background: #C8C0B0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Noto Serif JP', serif; font-size: 11px; font-weight: 600;
+    color: white; flex-shrink: 0; transition: background 0.3s, transform 0.3s;
+    position: relative; z-index: 1;
+  }
+  .spot-dot.done { background: var(--gold); }
+  .spot-dot.current { background: var(--vermillion); transform: scale(1.15); }
+  .spot-dot-label { font-size: 9px; color: var(--muted); margin-top: 4px; text-align: center; max-width: 55px; line-height: 1.3; }
+
+  /* ── ボタン ── */
+  .arrive-section { padding: 12px 20px 24px; display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
+  .btn-arrived {
+    background: var(--paper); border: 2px solid var(--ink); color: var(--ink);
+    padding: 14px; font-family: 'Noto Serif JP', serif; font-size: 14px;
+    letter-spacing: 0.12em; border-radius: var(--radius); cursor: pointer; width: 100%;
+    transition: background 0.2s, color 0.2s;
+  }
+  .btn-arrived:active { background: var(--ink); color: var(--paper); }
+  .manual-hint { font-size: 10px; color: var(--muted); text-align: center; letter-spacing: 0.06em; }
 
   /* ══ EXPLAIN ══ */
   #screen-explain { background: var(--bg); }
 
+  /* 写真エリア 16:9 */
+  .photo-area {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #2A2720;
+    position: relative;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .photo-area img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+    -webkit-user-drag: none;
+    display: block;
+  }
+
+  .photo-placeholder {
+    width: 100%; height: 100%;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 8px;
+    color: rgba(255,255,255,0.25);
+    font-size: 13px; letter-spacing: 0.1em;
+  }
+
+  .photo-placeholder-icon { font-size: 32px; opacity: 0.3; }
+
+  .photo-protect {
+    position: absolute; inset: 0;
+    background: transparent;
+    z-index: 10;
+  }
+
   .explain-header {
-    background: var(--ink);
-    color: var(--paper);
-    padding: 28px 24px 24px;
+    background: var(--ink); color: var(--paper);
+    padding: 20px 24px 18px; position: relative; overflow: hidden;
+  }
+
+  .explain-num-bg {
+    position: absolute; right: 14px; top: 6px;
+    font-family: 'Noto Serif JP', serif; font-size: 64px; font-weight: 700;
+    color: rgba(255,255,255,0.06); line-height: 1;
+  }
+
+  .explain-badge {
+    font-size: 10px; letter-spacing: 0.2em;
+    color: var(--vermillion); border: 1px solid var(--vermillion);
+    padding: 2px 10px; display: inline-block; margin-bottom: 8px;
+  }
+
+  .explain-title {
+    font-family: 'Noto Serif JP', serif; font-size: 24px; font-weight: 700;
+    line-height: 1.3; position: relative; z-index: 1; margin-bottom: 12px;
+  }
+
+  .btn-voice-replay {
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(250,247,241,0.7); padding: 7px 14px; border-radius: 20px;
+    font-size: 11px; letter-spacing: 0.08em; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 5px; transition: background 0.2s;
+  }
+  .btn-voice-replay:active { background: rgba(255,255,255,0.15); }
+
+  .explain-body { padding: 20px 20px 0; flex: 1; overflow-y: auto; }
+  .explain-text { font-size: 14px; line-height: 2.0; color: var(--ink); letter-spacing: 0.04em; margin-bottom: 20px; white-space: pre-wrap; }
+  .explain-divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+  .explain-sub { font-size: 10px; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px; }
+  .explain-keyword {
+    display: inline-block; background: var(--paper); border: 1px solid var(--border);
+    font-size: 11px; color: var(--gold); padding: 3px 10px; border-radius: 20px;
+    margin: 3px 3px 3px 0; letter-spacing: 0.04em;
+  }
+
+  .btn-next {
+    margin: 16px 20px 24px;
+    background: var(--vermillion); color: white; border: none;
+    padding: 15px; font-family: 'Noto Serif JP', serif; font-size: 15px;
+    letter-spacing: 0.15em; border-radius: var(--radius); cursor: pointer;
+    width: calc(100% - 40px); transition: opacity 0.2s;
+  }
+  .btn-next:active { opacity: 0.8; }
+
+  /* ══ GOAL / 表彰状 ══ */
+  #screen-goal {
+    background: var(--ink); color: var(--paper);
+    align-items: center; justify-content: flex-start;
+    padding: 0; position: relative; overflow-y: auto;
+  }
+
+  .certificate {
+    width: 100%;
+    background: linear-gradient(160deg, #1C1A16 0%, #2A2420 100%);
+    padding: 48px 32px 40px;
+    text-align: center;
     position: relative;
     overflow: hidden;
   }
 
-  .explain-num-bg {
+  .cert-corner {
     position: absolute;
-    right: 16px; top: 8px;
-    font-family: 'Noto Serif JP', serif;
-    font-size: 72px;
-    font-weight: 700;
-    color: rgba(255,255,255,0.06);
-    line-height: 1;
+    width: 60px; height: 60px;
+    border-color: rgba(154,122,58,0.4);
+    border-style: solid;
   }
 
-  .explain-badge {
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    color: var(--vermillion);
-    border: 1px solid var(--vermillion);
-    padding: 2px 10px;
-    display: inline-block;
-    margin-bottom: 10px;
-  }
+  .cert-corner.tl { top: 16px; left: 16px; border-width: 2px 0 0 2px; }
+  .cert-corner.tr { top: 16px; right: 16px; border-width: 2px 2px 0 0; }
+  .cert-corner.bl { bottom: 16px; left: 16px; border-width: 0 0 2px 2px; }
+  .cert-corner.br { bottom: 16px; right: 16px; border-width: 0 2px 2px 0; }
 
-  .explain-title {
-    font-family: 'Noto Serif JP', serif;
-    font-size: 26px;
-    font-weight: 700;
-    line-height: 1.3;
-    position: relative; z-index: 1;
-    margin-bottom: 14px;
-  }
-
-  .btn-voice-replay {
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.15);
-    color: rgba(250,247,241,0.75);
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 11px;
-    letter-spacing: 0.1em;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    transition: background 0.2s;
-  }
-
-  .btn-voice-replay:active { background: rgba(255,255,255,0.15); }
-
-  .explain-body { padding: 24px 20px; flex: 1; overflow-y: auto; }
-
-  .explain-text {
-    font-size: 15px;
-    line-height: 2.1;
-    color: var(--ink);
-    letter-spacing: 0.04em;
-    margin-bottom: 24px;
-    white-space: pre-wrap;
-  }
-
-  .explain-divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
-
-  .explain-sub {
-    font-size: 10px; color: var(--muted);
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    margin-bottom: 8px;
-  }
-
-  .explain-keyword {
-    display: inline-block;
-    background: var(--paper);
-    border: 1px solid var(--border);
-    font-size: 12px; color: var(--gold);
-    padding: 3px 10px;
-    border-radius: 20px;
-    margin: 3px 3px 3px 0;
-    letter-spacing: 0.04em;
-  }
-
-  .btn-next {
-    margin: 0 20px 28px;
-    background: var(--vermillion);
-    color: white;
-    border: none;
-    padding: 16px;
-    font-family: 'Noto Serif JP', serif;
-    font-size: 15px;
-    letter-spacing: 0.15em;
-    border-radius: var(--radius);
-    cursor: pointer;
-    width: calc(100% - 40px);
-    transition: opacity 0.2s;
-  }
-
-  .btn-next:active { opacity: 0.8; }
-
-  /* ══ GOAL ══ */
-  #screen-goal {
-    background: var(--ink);
-    color: var(--paper);
-    align-items: center;
-    justify-content: center;
-    padding: 48px 28px;
-    text-align: center;
-    position: relative;
-  }
-
-  .goal-pattern {
+  .cert-pattern {
     position: absolute; inset: 0;
     background-image:
-      radial-gradient(circle at 20% 20%, rgba(184,50,50,0.12) 0%, transparent 50%),
-      radial-gradient(circle at 80% 80%, rgba(154,122,58,0.12) 0%, transparent 50%);
+      radial-gradient(circle at 15% 15%, rgba(184,50,50,0.1) 0%, transparent 45%),
+      radial-gradient(circle at 85% 85%, rgba(154,122,58,0.1) 0%, transparent 45%);
     pointer-events: none;
   }
 
-  .goal-inner { position: relative; z-index: 1; }
+  .cert-inner { position: relative; z-index: 1; }
 
-  .goal-icon { font-size: 72px; margin-bottom: 20px; animation: float 3s ease-in-out infinite; }
-  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+  .cert-medal { font-size: 64px; margin-bottom: 16px; animation: float 3s ease-in-out infinite; }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
 
-  .goal-title {
+  .cert-label {
+    font-size: 10px; letter-spacing: 0.3em;
+    color: var(--gold); margin-bottom: 16px;
+    border-top: 1px solid rgba(154,122,58,0.3);
+    border-bottom: 1px solid rgba(154,122,58,0.3);
+    padding: 6px 0; display: inline-block; min-width: 180px;
+  }
+
+  .cert-title {
+    font-family: 'Noto Serif JP', serif; font-size: 28px; font-weight: 700;
+    margin-bottom: 6px; letter-spacing: 0.08em;
+  }
+
+  .cert-course {
+    font-size: 12px; color: rgba(250,247,241,0.5);
+    letter-spacing: 0.1em; margin-bottom: 24px;
+  }
+
+  .cert-text {
     font-family: 'Noto Serif JP', serif;
-    font-size: 30px; font-weight: 700;
-    margin-bottom: 10px; letter-spacing: 0.1em;
+    font-size: 14px; line-height: 2.1;
+    color: rgba(250,247,241,0.8);
+    margin-bottom: 24px; letter-spacing: 0.06em;
   }
 
-  .goal-sub {
-    font-size: 13px;
-    color: rgba(250,247,241,0.55);
-    line-height: 2.0;
-    margin-bottom: 36px;
-    letter-spacing: 0.05em;
+  .cert-date {
+    font-size: 11px; color: rgba(250,247,241,0.35);
+    letter-spacing: 0.1em; margin-bottom: 32px;
   }
 
-  .goal-dots { display: flex; justify-content: center; gap: 10px; margin-bottom: 36px; }
+  .cert-spots {
+    display: flex; justify-content: center; gap: 10px; margin-bottom: 32px;
+  }
 
-  .goal-dot {
-    width: 38px; height: 38px;
-    background: var(--gold);
-    border-radius: 50%;
+  .cert-spot-badge {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
+
+  .cert-dot {
+    width: 36px; height: 36px; background: var(--gold); border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    font-family: 'Noto Serif JP', serif;
-    font-size: 14px; font-weight: 700; color: white;
+    font-family: 'Noto Serif JP', serif; font-size: 14px; font-weight: 700; color: white;
+    box-shadow: 0 2px 8px rgba(154,122,58,0.4);
   }
 
-  .btn-restart {
-    background: transparent;
-    border: 1px solid rgba(250,247,241,0.25);
-    color: rgba(250,247,241,0.5);
-    padding: 12px 32px;
-    font-size: 12px; letter-spacing: 0.1em;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.2s;
+  .cert-spot-name { font-size: 8px; color: rgba(250,247,241,0.4); letter-spacing: 0.05em; }
+
+  .cert-share-hint {
+    font-size: 10px; color: rgba(250,247,241,0.25);
+    letter-spacing: 0.08em; margin-bottom: 24px;
   }
 
-  .btn-restart:active { border-color: var(--vermillion); color: var(--vermillion); }
+  .cert-buttons { display: flex; flex-direction: column; gap: 10px; }
 
-  /* ══ DEBUG PANEL ══ */
-  .debug-panel {
-    position: fixed;
-    bottom: 8px; right: 8px;
-    background: rgba(0,0,0,0.75);
-    color: rgba(255,255,255,0.7);
-    font-size: 10px;
-    padding: 6px 10px;
-    border-radius: 6px;
-    font-family: monospace;
-    z-index: 999;
-    display: none;
-    line-height: 1.6;
+  .btn-view-prizes {
+    background: var(--gold); color: white; border: none;
+    padding: 14px; font-family: 'Noto Serif JP', serif; font-size: 14px;
+    letter-spacing: 0.12em; border-radius: 4px; cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .btn-view-prizes:active { opacity: 0.8; }
+
+  .btn-restart-cert {
+    background: transparent; border: 1px solid rgba(250,247,241,0.2);
+    color: rgba(250,247,241,0.45); padding: 12px; font-size: 12px;
+    letter-spacing: 0.1em; border-radius: 4px; cursor: pointer; transition: all 0.2s;
+  }
+  .btn-restart-cert:active { border-color: var(--vermillion); color: var(--vermillion); }
+
+  /* ══ PRIZES ══ */
+  #screen-prizes { background: var(--bg); }
+
+  .prizes-header {
+    background: var(--ink); color: var(--paper);
+    padding: 24px 24px 20px; position: relative;
   }
 
-  .debug-panel.show { display: block; }
+  .prizes-header-badge {
+    font-size: 10px; letter-spacing: 0.2em; color: var(--gold);
+    border: 1px solid rgba(154,122,58,0.4); padding: 2px 10px;
+    display: inline-block; margin-bottom: 8px;
+  }
+
+  .prizes-header-title {
+    font-family: 'Noto Serif JP', serif; font-size: 24px; font-weight: 700;
+  }
+
+  .prizes-body { padding: 20px; flex: 1; overflow-y: auto; }
+
+  .prizes-section-label {
+    font-size: 10px; color: var(--muted); letter-spacing: 0.2em;
+    text-transform: uppercase; margin-bottom: 12px;
+    padding-bottom: 6px; border-bottom: 1px solid var(--border);
+  }
+
+  .prize-card {
+    background: var(--paper); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px 18px;
+    margin-bottom: 12px; display: flex; align-items: center; gap: 14px;
+    position: relative; overflow: hidden;
+    transition: border-color 0.3s;
+  }
+
+  .prize-card.completed { border-color: var(--gold); }
+  .prize-card.locked { opacity: 0.55; }
+
+  .prize-card-icon { font-size: 32px; flex-shrink: 0; }
+
+  .prize-card-info { flex: 1; }
+  .prize-card-name { font-family: 'Noto Serif JP', serif; font-size: 16px; font-weight: 600; margin-bottom: 3px; }
+  .prize-card-desc { font-size: 11px; color: var(--muted); line-height: 1.6; letter-spacing: 0.04em; }
+  .prize-card-date { font-size: 10px; color: var(--gold); margin-top: 4px; letter-spacing: 0.05em; }
+
+  .prize-card-status { flex-shrink: 0; text-align: center; }
+  .prize-status-icon { font-size: 22px; }
+  .prize-status-label { font-size: 9px; color: var(--muted); margin-top: 2px; letter-spacing: 0.06em; }
+
+  .prize-card-completed-bar {
+    position: absolute; top: 0; left: 0;
+    width: 4px; height: 100%;
+    background: var(--gold);
+    border-radius: var(--radius) 0 0 var(--radius);
+  }
+
+  .btn-back {
+    margin: 0 20px 24px;
+    background: var(--ink); color: var(--paper); border: none;
+    padding: 14px; font-family: 'Noto Serif JP', serif; font-size: 14px;
+    letter-spacing: 0.12em; border-radius: var(--radius); cursor: pointer;
+    width: calc(100% - 40px); transition: opacity 0.2s;
+  }
+  .btn-back:active { opacity: 0.8; }
+
+  .empty-prizes {
+    text-align: center; padding: 48px 20px;
+    color: var(--muted); font-size: 13px; line-height: 2.0;
+    letter-spacing: 0.06em;
+  }
+
+  .empty-icon { font-size: 40px; margin-bottom: 16px; opacity: 0.4; }
 </style>
 </head>
 <body>
@@ -608,38 +520,18 @@
   <div class="start-inner">
     <div class="start-badge">MASUDA MACHI ARUKI</div>
     <div class="start-title">増田<br>まち歩き</div>
-    <div class="start-version">VERSION 2.0 ／ GPS + 音声ガイド</div>
+    <div class="start-version">VERSION 3.0</div>
     <div class="start-subtitle">歴史の礎を歩くコース</div>
 
-    <div class="spot-preview">
-      <div class="spot-preview-item">
-        <div class="spot-num-small">一</div>
-        <div class="spot-preview-name">満福寺</div>
-        <div class="spot-preview-dist">START</div>
-      </div>
-      <div class="spot-preview-item">
-        <div class="spot-num-small">二</div>
-        <div class="spot-preview-name">清真苑</div>
-        <div class="spot-preview-dist">約200m</div>
-      </div>
-      <div class="spot-preview-item">
-        <div class="spot-num-small">三</div>
-        <div class="spot-preview-name">北都銀行発祥の地碑</div>
-        <div class="spot-preview-dist">約250m</div>
-      </div>
-      <div class="spot-preview-item">
-        <div class="spot-num-small">★</div>
-        <div class="spot-preview-name">案内所「ほたる」（ゴール）</div>
-        <div class="spot-preview-dist">約300m</div>
-      </div>
-    </div>
+    <div class="spot-preview" id="start-spot-list"></div>
 
     <div class="gps-notice">
       <div class="gps-notice-icon">📡</div>
-      <div>GPSで現在地を確認し、スポットに近づくと自動で音声ガイドが始まります。スマホの位置情報と音声をオンにしてください。</div>
+      <div>GPSで現在地を確認し、スポットに近づくと自動で音声ガイドが始まります。位置情報と音声をオンにしてください。</div>
     </div>
 
     <button class="btn-start" onclick="startTour()">まち歩きを始める</button>
+    <button class="btn-prizes" onclick="showScreen('screen-prizes'); renderPrizes()">🏅 獲得済みプライズを見る</button>
     <div class="walk-info">所要時間：約40〜50分 ／ 距離：約500m</div>
   </div>
 </div>
@@ -660,7 +552,6 @@
     <div class="nav-spot-name" id="nav-spot-name"></div>
   </div>
 
-  <!-- 距離パネル -->
   <div class="distance-panel" id="distance-panel">
     <div class="dist-icon" id="dist-icon">🚶</div>
     <div class="dist-info">
@@ -668,31 +559,25 @@
       <div class="dist-status" id="dist-status">GPS位置情報を取得しています…</div>
     </div>
     <div class="ring-wrap">
-      <svg class="ring-svg" width="52" height="52" viewBox="0 0 52 52">
-        <circle class="ring-bg" cx="26" cy="26" r="22"/>
-        <circle class="ring-fill" id="ring-fill" cx="26" cy="26" r="22"/>
+      <svg class="ring-svg" width="48" height="48" viewBox="0 0 48 48">
+        <circle class="ring-bg" cx="24" cy="24" r="20"/>
+        <circle class="ring-fill" id="ring-fill" cx="24" cy="24" r="20"/>
       </svg>
       <div class="ring-label" id="ring-label">--</div>
     </div>
   </div>
 
-  <!-- 音声ログ -->
   <div class="voice-log" id="voice-log">
-    <span class="voice-wave">🔇</span>
+    <span id="voice-wave">🔇</span>
     <span id="voice-log-text">音声ガイド待機中</span>
   </div>
 
-  <!-- マップ -->
-  <div class="map-area" onclick="openMaps()" id="map-area">
-    <div class="map-dots"></div>
-    <div class="map-pin"><div class="map-pin-inner">🏛</div></div>
-    <div class="map-open-label">タップしてGoogleマップで案内</div>
+  <div class="map-container">
+    <div id="leaflet-map"></div>
   </div>
 
-  <!-- スポットドット -->
   <div class="spots-row" id="spots-row"></div>
 
-  <!-- ボタン -->
   <div class="arrive-section">
     <button class="btn-arrived" onclick="manualArrive()">📍 着いた！（手動）</button>
     <div class="manual-hint">GPSが届かない場合などに使用</div>
@@ -701,13 +586,19 @@
 
 <!-- ③ 解説 -->
 <div id="screen-explain" class="screen">
+  <div class="photo-area" id="photo-area">
+    <div class="photo-protect" oncontextmenu="return false;"></div>
+    <div class="photo-placeholder" id="photo-placeholder">
+      <div class="photo-placeholder-icon">📷</div>
+      <div>写真準備中</div>
+    </div>
+  </div>
+
   <div class="explain-header">
     <div class="explain-num-bg" id="explain-num-bg"></div>
     <div class="explain-badge" id="explain-badge"></div>
     <div class="explain-title" id="explain-title"></div>
-    <button class="btn-voice-replay" onclick="replayVoice()">
-      🔊 もう一度聴く
-    </button>
+    <button class="btn-voice-replay" onclick="replayVoice()">🔊 もう一度聴く</button>
   </div>
   <div class="explain-body">
     <div class="explain-text" id="explain-text"></div>
@@ -718,33 +609,44 @@
   <button class="btn-next" id="btn-next" onclick="nextSpot()"></button>
 </div>
 
-<!-- ④ ゴール -->
+<!-- ④ 表彰状 -->
 <div id="screen-goal" class="screen">
-  <div class="goal-pattern"></div>
-  <div class="goal-inner">
-    <div class="goal-icon">🏮</div>
-    <div class="goal-title">まち歩き完了！</div>
-    <div class="goal-sub">
-      増田の礎を歩き切りました。<br>
-      蔵通りの内蔵が夜に光ることから<br>
-      「蛍町」と呼ばれたこの地で、<br>
-      旅の締めくくりを。
+  <div class="certificate">
+    <div class="cert-corner tl"></div>
+    <div class="cert-corner tr"></div>
+    <div class="cert-corner bl"></div>
+    <div class="cert-corner br"></div>
+    <div class="cert-pattern"></div>
+    <div class="cert-inner">
+      <div class="cert-medal">🏮</div>
+      <div class="cert-label">COMPLETION CERTIFICATE</div>
+      <div class="cert-title">まち歩き完了</div>
+      <div class="cert-course">歴史の礎を歩くコース</div>
+      <div class="cert-text">
+        増田の礎を歩き切りました。<br>
+        蔵通りの内蔵が夜に光ることから<br>
+        「蛍町」と呼ばれたこの地で、<br>
+        歴史の重みを感じていただけましたか。
+      </div>
+      <div class="cert-spots" id="cert-spots"></div>
+      <div class="cert-date" id="cert-date"></div>
+      <div class="cert-share-hint">📸 スクリーンショットで記念に保存できます</div>
+      <div class="cert-buttons">
+        <button class="btn-view-prizes" onclick="showScreen('screen-prizes'); renderPrizes()">🏅 プライズを確認する</button>
+        <button class="btn-restart-cert" onclick="restart()">もう一度最初から</button>
+      </div>
     </div>
-    <div class="goal-dots">
-      <div class="goal-dot">一</div>
-      <div class="goal-dot">二</div>
-      <div class="goal-dot">三</div>
-      <div class="goal-dot">★</div>
-    </div>
-    <button class="btn-restart" onclick="restart()">もう一度最初から</button>
   </div>
 </div>
 
-<!-- デバッグパネル（開発用） -->
-<div class="debug-panel" id="debug-panel">
-  <div id="debug-pos">位置: --</div>
-  <div id="debug-dist">距離: --</div>
-  <div id="debug-acc">精度: --</div>
+<!-- ⑤ プライズ一覧 -->
+<div id="screen-prizes" class="screen">
+  <div class="prizes-header">
+    <div class="prizes-header-badge">MY PRIZES</div>
+    <div class="prizes-header-title">獲得プライズ</div>
+  </div>
+  <div class="prizes-body" id="prizes-body"></div>
+  <button class="btn-back" onclick="showScreen('screen-start'); renderStartList()">← トップへ戻る</button>
 </div>
 
 <script>
@@ -753,70 +655,108 @@
 // ══════════════════════════════
 const SPOTS = [
   {
+    id: 'manpukuji',
     name: "満福寺",
     lat: 39.205493, lng: 140.547068,
+    arriveDistance: 30,   // 個別到着距離（m）
+    approachDistance: 60,
     badge: "SPOT 01 ／ 歴史の始まり",
     numLabel: "一",
+    photo: null, // 将来: 'images/manpukuji.webp'
     text: "増田にお城が築かれたのは1362年から1363年頃のこと。その城下を見守るように、同じ時代に建立されたのがこの満福寺です。\n\n600年以上の歳月を経てなお、増田という町の「始まり」を静かに伝え続ける場所です。お城と共に生まれたこの寺は、増田の歴史の礎そのものと言えるでしょう。",
     keywords: ["曹洞宗", "1362〜63年建立", "増田城と同時期", "ころり観音"],
     voiceApproach: "まもなく満福寺です。あと少しです。",
     voiceArrive: "満福寺に到着しました。増田にお城が築かれた1362年頃、このお寺も同じ時代に建立されました。600年以上の時を経た今も、増田という町の始まりを静かに伝えています。"
   },
   {
+    id: 'seishinen',
     name: "清真苑",
     lat: 39.203338, lng: 140.547721,
+    arriveDistance: 15,
+    approachDistance: 50,
     badge: "SPOT 02 ／ 豪商の夢の跡",
     numLabel: "二",
+    photo: null,
     text: "かつてここには、増田銀行創業者のひとり・佐藤清十郎が建てた豪壮な別荘がありました。入母屋造の風格ある建物で、元総理大臣・斎藤実もここを訪れたと伝わります。\n\n今は公園として整備されていますが、名峰・真山を借景に取り込んだ庭園の構えに、明治期の豪商たちが増田に込めた誇りと夢が偲ばれます。",
     keywords: ["増田銀行創業者", "佐藤清十郎", "入母屋造", "斎藤実（元総理）", "真山を借景"],
     voiceApproach: "まもなく清真苑です。あと少しです。",
     voiceArrive: "清真苑に到着しました。かつてここには、増田銀行創業者のひとり、佐藤清十郎の別荘がありました。元総理大臣の斎藤実も訪れたと伝わる、格式ある場所です。"
   },
   {
+    id: 'hokuto',
     name: "北都銀行発祥の地碑",
     lat: 39.202530, lng: 140.546177,
+    arriveDistance: 15,
+    approachDistance: 50,
     badge: "SPOT 03 ／ 商人たちの結束",
     numLabel: "三",
+    photo: null,
     text: "明治の初め、増田の有力商人たちが資金を出し合い、この地に増田銀行を設立しました。その後身が現在の北都銀行です。\n\nそしてもうひとつの縁——漫画「釣りキチ三平」の作者・矢口高雄先生は、漫画家になる前にこの銀行の行員として働いていました。増田の土壌が一人の稀代の漫画家を育てていたのです。",
     keywords: ["増田銀行→北都銀行", "明治期設立", "矢口高雄先生", "釣りキチ三平", "地元商人の合資"],
     voiceApproach: "まもなく北都銀行発祥の地碑です。あと少しです。",
-    voiceArrive: "北都銀行発祥の地碑に到着しました。明治の頃、増田の商人たちが資金を出し合い、ここに増田銀行を設立しました。漫画、釣りキチ三平の作者、矢口高雄先生も、漫画家になる前はこの銀行で働いていました。"
+    voiceArrive: "北都銀行発祥の地碑に到着しました。明治の頃、増田の商人たちが資金を出し合いここに増田銀行を設立しました。漫画、釣りキチ三平の作者、矢口高雄先生も漫画家になる前はこの銀行で働いていました。"
   },
   {
-    name: "増田町観光協会「ほたる」",
+    id: 'hotaru',
+    name: "案内所「ほたる」",
     lat: 39.201564, lng: 140.546041,
+    arriveDistance: 30,
+    approachDistance: 60,
     badge: "GOAL ／ 旅の終わりに",
     numLabel: "★",
+    photo: null,
     text: "お疲れ様でした。ここが今日の旅のゴールです。\n\n「ほたる」という名前は、増田の内蔵が家の後ろで光ることから「蛍町」と呼ばれたのが由来と言われています。蔵の明かりが蛍のように夜の町に浮かぶ——そんな光景を想像しながら、増田の蔵通りをもう一度歩いてみてはいかがでしょうか。",
     keywords: ["内蔵が光る＝蛍町", "重要伝統的建造物群保存地区", "内蔵見学", "増田の蔵通り"],
-    voiceApproach: "ゴールまであと少しです。もう少しです。",
+    voiceApproach: "ゴールまであと少しです。",
     voiceArrive: "ゴールの増田町観光案内所、ほたるに到着しました。お疲れ様でした。ほたるという名前は、増田の内蔵が夜に光る様子が蛍のようだったことに由来します。今日歩いた道が、この町の歴史の礎です。"
   }
 ];
 
+// プライズ定義
+const PRIZES = [
+  {
+    id: 'course_rekishi',
+    name: '歴史の礎コース',
+    icon: '🏮',
+    desc: '満福寺・清真苑・北都銀行発祥の地碑・ほたるを巡る歴史コースを完走',
+    requiredCourse: 'rekishi'
+  }
+];
+
 // ══════════════════════════════
-// 状態管理
+// 状態
 // ══════════════════════════════
 let currentSpot = 0;
 let watchId = null;
 let approachNotified = false;
 let arrivedDetected = false;
-let lastKnownDist = null;
-let debugMode = false; // 開発時はtrueにする
+let lastVoiceText = '';
+let leafletMap = null;
+let userMarker = null;
+let destMarker = null;
 
-// トリガー距離（メートル）
-const APPROACH_DIST = 50;  // 「あと少し」通知
-const ARRIVE_DIST   = 15;  // 自動到着判定
+// ══════════════════════════════
+// ローカルストレージ
+// ══════════════════════════════
+function loadPrizes() {
+  try {
+    return JSON.parse(localStorage.getItem('masuda_prizes') || '{}');
+  } catch { return {}; }
+}
+
+function savePrize(prizeId, date) {
+  const data = loadPrizes();
+  data[prizeId] = date;
+  localStorage.setItem('masuda_prizes', JSON.stringify(data));
+}
 
 // ══════════════════════════════
 // ユーティリティ
 // ══════════════════════════════
 function haversine(lat1, lng1, lat2, lng2) {
   const R = 6371000;
-  const φ1 = lat1 * Math.PI / 180;
-  const φ2 = lat2 * Math.PI / 180;
-  const Δφ = (lat2 - lat1) * Math.PI / 180;
-  const Δλ = (lng2 - lng1) * Math.PI / 180;
+  const φ1 = lat1 * Math.PI / 180, φ2 = lat2 * Math.PI / 180;
+  const Δφ = (lat2 - lat1) * Math.PI / 180, Δλ = (lng2 - lng1) * Math.PI / 180;
   const a = Math.sin(Δφ/2)**2 + Math.cos(φ1)*Math.cos(φ2)*Math.sin(Δλ/2)**2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
@@ -824,41 +764,37 @@ function haversine(lat1, lng1, lat2, lng2) {
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  if (id === 'screen-nav' && leafletMap) {
+    setTimeout(() => leafletMap.invalidateSize(), 100);
+  }
+}
+
+function formatDate(dateStr) {
+  const d = new Date(dateStr);
+  return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
 }
 
 // ══════════════════════════════
 // 音声
 // ══════════════════════════════
-let lastVoiceText = '';
-
 function speak(text, onEnd) {
   if (!('speechSynthesis' in window)) return;
   speechSynthesis.cancel();
   lastVoiceText = text;
-
   const utter = new SpeechSynthesisUtterance(text);
-  utter.lang = 'ja-JP';
-  utter.rate = 0.88;
-  utter.pitch = 1.0;
-  utter.volume = 1.0;
-
-  // 日本語音声を優先
+  utter.lang = 'ja-JP'; utter.rate = 0.88; utter.pitch = 1.0; utter.volume = 1.0;
   const voices = speechSynthesis.getVoices();
   const jaVoice = voices.find(v => v.lang.startsWith('ja'));
   if (jaVoice) utter.voice = jaVoice;
-
   if (onEnd) utter.onend = onEnd;
-
   setVoiceLog('🔊', text);
   speechSynthesis.speak(utter);
 }
 
-function replayVoice() {
-  if (lastVoiceText) speak(lastVoiceText);
-}
+function replayVoice() { if (lastVoiceText) speak(lastVoiceText); }
 
 function setVoiceLog(icon, text) {
-  document.getElementById('voice-log').querySelector('.voice-wave').textContent = icon;
+  document.getElementById('voice-wave').textContent = icon;
   document.getElementById('voice-log-text').textContent = text;
 }
 
@@ -866,53 +802,46 @@ function setVoiceLog(icon, text) {
 // GPS
 // ══════════════════════════════
 function startGPS() {
-  if (!navigator.geolocation) {
-    setGPSStatus('error', 'GPS非対応');
-    return;
-  }
-
+  if (!navigator.geolocation) { setGPSStatus('error', 'GPS非対応'); return; }
   setGPSStatus('searching', 'GPS取得中');
-
   watchId = navigator.geolocation.watchPosition(
-    onGPSUpdate,
-    onGPSError,
+    onGPSUpdate, onGPSError,
     { enableHighAccuracy: true, maximumAge: 3000, timeout: 15000 }
   );
 }
 
 function stopGPS() {
-  if (watchId !== null) {
-    navigator.geolocation.clearWatch(watchId);
-    watchId = null;
-  }
+  if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
 }
 
 function onGPSUpdate(pos) {
   const { latitude, longitude, accuracy } = pos.coords;
   setGPSStatus('active', `精度 ±${Math.round(accuracy)}m`);
 
-  const spot = SPOTS[currentSpot];
-  const dist = Math.round(haversine(latitude, longitude, spot.lat, spot.lng));
-  lastKnownDist = dist;
-
-  updateDistanceUI(dist);
-
-  if (debugMode) {
-    document.getElementById('debug-panel').classList.add('show');
-    document.getElementById('debug-pos').textContent = `位置: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
-    document.getElementById('debug-dist').textContent = `距離: ${dist}m`;
-    document.getElementById('debug-acc').textContent = `精度: ±${Math.round(accuracy)}m`;
+  // 地図更新
+  if (leafletMap) {
+    if (!userMarker) {
+      userMarker = L.circleMarker([latitude, longitude], {
+        radius: 8, fillColor: '#3A7A4A', fillOpacity: 0.9,
+        color: 'white', weight: 2
+      }).addTo(leafletMap);
+    } else {
+      userMarker.setLatLng([latitude, longitude]);
+    }
   }
 
-  // 到着判定
-  if (!arrivedDetected && dist <= ARRIVE_DIST) {
+  const spot = SPOTS[currentSpot];
+  const dist = Math.round(haversine(latitude, longitude, spot.lat, spot.lng));
+
+  updateDistanceUI(dist, spot);
+
+  if (!arrivedDetected && dist <= spot.arriveDistance) {
     arrivedDetected = true;
     autoArrive();
     return;
   }
 
-  // 接近通知
-  if (!approachNotified && dist <= APPROACH_DIST && dist > ARRIVE_DIST) {
+  if (!approachNotified && dist <= spot.approachDistance && dist > spot.arriveDistance) {
     approachNotified = true;
     speak(spot.voiceApproach);
   }
@@ -925,61 +854,95 @@ function onGPSError(err) {
 }
 
 function setGPSStatus(state, label) {
-  const dot = document.getElementById('gps-dot');
-  const lbl = document.getElementById('gps-label');
-  dot.className = 'gps-dot ' + state;
-  lbl.textContent = label;
+  document.getElementById('gps-dot').className = 'gps-dot ' + state;
+  document.getElementById('gps-label').textContent = label;
 }
 
 // ══════════════════════════════
 // 距離UI
 // ══════════════════════════════
-function updateDistanceUI(dist) {
+function updateDistanceUI(dist, spot) {
   const panel = document.getElementById('distance-panel');
-  const numEl = document.getElementById('dist-number');
-  const statusEl = document.getElementById('dist-status');
-  const iconEl = document.getElementById('dist-icon');
-  const ringFill = document.getElementById('ring-fill');
-  const ringLabel = document.getElementById('ring-label');
+  document.getElementById('dist-number').innerHTML = `${dist}<span>m</span>`;
 
-  numEl.innerHTML = `${dist}<span>m</span>`;
-
-  const maxDist = 400;
+  const maxDist = 500;
   const ratio = Math.min(1, (maxDist - dist) / maxDist);
-  const circumference = 138;
-  ringFill.style.strokeDashoffset = circumference - (ratio * circumference);
-  ringLabel.textContent = dist <= 99 ? dist + 'm' : '遠';
+  const circumference = 126;
+  document.getElementById('ring-fill').style.strokeDashoffset = circumference - (ratio * circumference);
+  document.getElementById('ring-label').textContent = dist <= 999 ? dist + 'm' : '遠';
 
   panel.classList.remove('near', 'arrived');
 
-  if (dist <= ARRIVE_DIST) {
+  if (dist <= spot.arriveDistance) {
     panel.classList.add('arrived');
-    iconEl.textContent = '🎯';
-    statusEl.textContent = '到着しました！';
-    ringFill.style.stroke = 'var(--green)';
-  } else if (dist <= APPROACH_DIST) {
+    document.getElementById('dist-icon').textContent = '🎯';
+    document.getElementById('dist-status').textContent = '到着しました！';
+    document.getElementById('ring-fill').style.stroke = 'var(--green)';
+  } else if (dist <= spot.approachDistance) {
     panel.classList.add('near');
-    iconEl.textContent = '🏃';
-    statusEl.textContent = 'もうすぐです！';
-    ringFill.style.stroke = '#f0a040';
+    document.getElementById('dist-icon').textContent = '🏃';
+    document.getElementById('dist-status').textContent = `もうすぐです！（到着判定: ${spot.arriveDistance}m以内）`;
+    document.getElementById('ring-fill').style.stroke = '#f0a040';
   } else {
-    iconEl.textContent = '🚶';
-    statusEl.textContent = `${SPOTS[currentSpot].name} まで`;
-    ringFill.style.stroke = 'var(--vermillion)';
+    document.getElementById('dist-icon').textContent = '🚶';
+    document.getElementById('dist-status').textContent = `${spot.name} まで（到着判定: ${spot.arriveDistance}m以内）`;
+    document.getElementById('ring-fill').style.stroke = 'var(--vermillion)';
   }
 }
 
 // ══════════════════════════════
-// ルート
+// Leafletマップ
+// ══════════════════════════════
+function initMap() {
+  if (leafletMap) { leafletMap.remove(); leafletMap = null; userMarker = null; destMarker = null; }
+
+  const spot = SPOTS[currentSpot];
+  leafletMap = L.map('leaflet-map', { zoomControl: false, attributionControl: false })
+    .setView([spot.lat, spot.lng], 16);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19
+  }).addTo(leafletMap);
+
+  // 目的地マーカー
+  const destIcon = L.divIcon({
+    html: `<div style="background:var(--vermillion);width:20px;height:20px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>`,
+    iconSize: [20, 20], iconAnchor: [10, 20], className: ''
+  });
+
+  destMarker = L.marker([spot.lat, spot.lng], { icon: destIcon })
+    .addTo(leafletMap)
+    .bindPopup(spot.name);
+
+  // 到着範囲サークル
+  L.circle([spot.lat, spot.lng], {
+    radius: spot.arriveDistance,
+    color: 'var(--vermillion)', fillColor: 'var(--vermillion)',
+    fillOpacity: 0.08, weight: 1, dashArray: '4 4'
+  }).addTo(leafletMap);
+
+  setTimeout(() => leafletMap.invalidateSize(), 200);
+}
+
+function updateMapDestination() {
+  if (!leafletMap) return;
+  const spot = SPOTS[currentSpot];
+  leafletMap.setView([spot.lat, spot.lng], 16);
+  if (destMarker) {
+    destMarker.setLatLng([spot.lat, spot.lng]);
+    destMarker.setPopupContent(spot.name);
+  }
+}
+
+// ══════════════════════════════
+// スポットドット
 // ══════════════════════════════
 function buildSpotsRow() {
   const row = document.getElementById('spots-row');
   row.innerHTML = '';
-
   SPOTS.forEach((spot, i) => {
     const wrap = document.createElement('div');
     wrap.className = 'spot-dot-wrap';
-
     const lineRow = document.createElement('div');
     lineRow.className = 'dot-line-row';
 
@@ -1006,7 +969,6 @@ function buildSpotsRow() {
     const label = document.createElement('div');
     label.className = 'spot-dot-label';
     label.textContent = spot.name;
-
     wrap.appendChild(lineRow);
     wrap.appendChild(label);
     row.appendChild(wrap);
@@ -1021,32 +983,21 @@ function updateNavScreen() {
   document.getElementById('nav-spot-name').textContent = spot.name + ' へ';
   buildSpotsRow();
 
-  // リセット
   approachNotified = false;
   arrivedDetected = false;
 
-  // 距離UI初期化
   document.getElementById('dist-number').innerHTML = '--<span>m</span>';
-  document.getElementById('dist-status').textContent = 'GPS位置情報を確認しています…';
-  document.getElementById('ring-fill').style.strokeDashoffset = 138;
+  document.getElementById('dist-status').textContent = `GPS位置情報を確認しています…（到着判定: ${spot.arriveDistance}m以内）`;
+  document.getElementById('ring-fill').style.strokeDashoffset = 126;
   document.getElementById('ring-label').textContent = '--';
   document.getElementById('distance-panel').className = 'distance-panel';
 }
 
 // ══════════════════════════════
-// 到着処理
+// 到着
 // ══════════════════════════════
-function autoArrive() {
-  const spot = SPOTS[currentSpot];
-  showExplain(spot);
-  speak(spot.voiceArrive);
-}
-
-function manualArrive() {
-  const spot = SPOTS[currentSpot];
-  showExplain(spot);
-  speak(spot.voiceArrive);
-}
+function autoArrive() { showExplain(SPOTS[currentSpot]); speak(SPOTS[currentSpot].voiceArrive); }
+function manualArrive() { showExplain(SPOTS[currentSpot]); speak(SPOTS[currentSpot].voiceArrive); }
 
 function showExplain(spot) {
   document.getElementById('explain-num-bg').textContent = spot.numLabel;
@@ -1054,6 +1005,25 @@ function showExplain(spot) {
   document.getElementById('explain-title').textContent = spot.name;
   document.getElementById('explain-text').textContent = spot.text;
 
+  // 写真
+  const photoArea = document.getElementById('photo-area');
+  const placeholder = document.getElementById('photo-placeholder');
+  const existingImg = photoArea.querySelector('img');
+  if (existingImg) existingImg.remove();
+
+  if (spot.photo) {
+    const img = document.createElement('img');
+    img.src = spot.photo;
+    img.alt = spot.name;
+    img.draggable = false;
+    img.oncontextmenu = () => false;
+    placeholder.style.display = 'none';
+    photoArea.insertBefore(img, photoArea.firstChild);
+  } else {
+    placeholder.style.display = 'flex';
+  }
+
+  // キーワード
   const kwDiv = document.getElementById('explain-keywords');
   kwDiv.innerHTML = '';
   spot.keywords.forEach(kw => {
@@ -1064,7 +1034,7 @@ function showExplain(spot) {
   });
 
   const isLast = currentSpot === SPOTS.length - 1;
-  document.getElementById('btn-next').textContent = isLast ? '🏮 ゴールへ' : '次のスポットへ →';
+  document.getElementById('btn-next').textContent = isLast ? '🏮 表彰状を受け取る' : '次のスポットへ →';
 
   showScreen('screen-explain');
 }
@@ -1072,51 +1042,159 @@ function showExplain(spot) {
 // ══════════════════════════════
 // ナビゲーション
 // ══════════════════════════════
-function openMaps() {
-  const spot = SPOTS[currentSpot];
-  const url = `https://www.google.com/maps/dir/?api=1&destination=${spot.lat},${spot.lng}&travelmode=walking`;
-  window.open(url, '_blank');
-}
-
 function startTour() {
   currentSpot = 0;
   updateNavScreen();
   showScreen('screen-nav');
+  initMap();
   startGPS();
-
-  // 出発案内
-  setTimeout(() => {
-    speak(`まち歩きを始めます。最初の目的地は${SPOTS[0].name}です。`);
-  }, 800);
+  setTimeout(() => speak(`まち歩きを始めます。最初の目的地は${SPOTS[0].name}です。`), 800);
 }
 
 function nextSpot() {
   if (currentSpot === SPOTS.length - 1) {
     stopGPS();
-    showScreen('screen-goal');
+    const today = new Date().toISOString();
+    savePrize('course_rekishi', today);
+    showGoal();
     return;
   }
   currentSpot++;
   updateNavScreen();
+  updateMapDestination();
   showScreen('screen-nav');
-
-  setTimeout(() => {
-    speak(`次は${SPOTS[currentSpot].name}です。`);
-  }, 500);
+  setTimeout(() => speak(`次は${SPOTS[currentSpot].name}です。`), 500);
 }
 
 function restart() {
   stopGPS();
   currentSpot = 0;
+  renderStartList();
   showScreen('screen-start');
 }
 
-// 音声リスト初期化（ページ読み込み時）
+// ══════════════════════════════
+// 表彰状
+// ══════════════════════════════
+function showGoal() {
+  const today = new Date();
+  const dateStr = `${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日 達成`;
+  document.getElementById('cert-date').textContent = dateStr;
+
+  const certSpots = document.getElementById('cert-spots');
+  certSpots.innerHTML = '';
+  SPOTS.forEach(spot => {
+    const wrap = document.createElement('div');
+    wrap.className = 'cert-spot-badge';
+    wrap.innerHTML = `
+      <div class="cert-dot">${spot.numLabel}</div>
+      <div class="cert-spot-name">${spot.name}</div>
+    `;
+    certSpots.appendChild(wrap);
+  });
+
+  showScreen('screen-goal');
+  setTimeout(() => speak('おめでとうございます。まち歩きコースを完走しました。増田の歴史の礎を歩ききった証として、表彰状を受け取ってください。'), 600);
+}
+
+// ══════════════════════════════
+// スタート画面リスト描画
+// ══════════════════════════════
+function renderStartList() {
+  const prizes = loadPrizes();
+  const completed = !!prizes['course_rekishi'];
+  const list = document.getElementById('start-spot-list');
+  list.innerHTML = '';
+
+  SPOTS.forEach((spot, i) => {
+    const item = document.createElement('div');
+    item.className = 'spot-preview-item' + (completed ? ' completed' : '');
+    item.innerHTML = `
+      <div class="spot-num-small">${spot.numLabel}</div>
+      <div class="spot-preview-name">${spot.name}</div>
+      <div class="spot-preview-dist">${i === 0 ? 'START' : i === SPOTS.length-1 ? 'GOAL' : ''}</div>
+    `;
+    list.appendChild(item);
+  });
+}
+
+// ══════════════════════════════
+// プライズ画面
+// ══════════════════════════════
+function renderPrizes() {
+  const prizes = loadPrizes();
+  const body = document.getElementById('prizes-body');
+  body.innerHTML = '';
+
+  const completed = PRIZES.filter(p => prizes[p.id]);
+  const locked = PRIZES.filter(p => !prizes[p.id]);
+
+  if (completed.length === 0 && locked.length === 0) {
+    body.innerHTML = `<div class="empty-prizes"><div class="empty-icon">🏅</div>まだプライズはありません。<br>まち歩きを完走すると<br>プライズが獲得できます。</div>`;
+    return;
+  }
+
+  if (completed.length > 0) {
+    const label = document.createElement('div');
+    label.className = 'prizes-section-label';
+    label.textContent = `COMPLETED — ${completed.length}件`;
+    body.appendChild(label);
+
+    completed.forEach(prize => {
+      const card = document.createElement('div');
+      card.className = 'prize-card completed';
+      card.innerHTML = `
+        <div class="prize-card-completed-bar"></div>
+        <div class="prize-card-icon">${prize.icon}</div>
+        <div class="prize-card-info">
+          <div class="prize-card-name">${prize.name}</div>
+          <div class="prize-card-desc">${prize.desc}</div>
+          <div class="prize-card-date">✓ ${formatDate(prizes[prize.id])} 達成</div>
+        </div>
+        <div class="prize-card-status">
+          <div class="prize-status-icon">🥇</div>
+          <div class="prize-status-label">獲得済み</div>
+        </div>
+      `;
+      body.appendChild(card);
+    });
+  }
+
+  if (locked.length > 0) {
+    const label2 = document.createElement('div');
+    label2.className = 'prizes-section-label';
+    label2.style.marginTop = '20px';
+    label2.textContent = `LOCKED — ${locked.length}件`;
+    body.appendChild(label2);
+
+    locked.forEach(prize => {
+      const card = document.createElement('div');
+      card.className = 'prize-card locked';
+      card.innerHTML = `
+        <div class="prize-card-icon">🔒</div>
+        <div class="prize-card-info">
+          <div class="prize-card-name">${prize.name}</div>
+          <div class="prize-card-desc">${prize.desc}</div>
+        </div>
+        <div class="prize-card-status">
+          <div class="prize-status-icon">🔒</div>
+          <div class="prize-status-label">未達成</div>
+        </div>
+      `;
+      body.appendChild(card);
+    });
+  }
+}
+
+// ══════════════════════════════
+// 初期化
+// ══════════════════════════════
 window.addEventListener('load', () => {
   if ('speechSynthesis' in window) {
     speechSynthesis.getVoices();
     speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
   }
+  renderStartList();
 });
 </script>
 </body>
